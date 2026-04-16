@@ -29,3 +29,13 @@ export function calculateNights(checkIn: Date, checkOut: Date): number {
   const diff = new Date(checkOut).getTime() - new Date(checkIn).getTime()
   return Math.ceil(diff / (1000 * 60 * 60 * 24))
 }
+
+export function calculateRevenuePerNight(totalAmount: number, expenses: number, nights: number): number {
+  if (nights === 0) return 0
+  return (totalAmount - expenses) / nights
+}
+
+export function calculateOccupancyRate(bookedNights: number, totalDaysInMonth: number): number {
+  if (totalDaysInMonth === 0) return 0
+  return Math.min(100, (bookedNights / totalDaysInMonth) * 100)
+}

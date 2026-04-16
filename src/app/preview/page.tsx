@@ -1,4 +1,4 @@
-import { Home, LayoutDashboard, DollarSign, Receipt, Bell, Plus, Pencil, Trash2, RefreshCw, LogOut, ChevronDown, Upload, Check, TrendingDown, Percent, Calendar, AlertCircle } from "lucide-react"
+import { Home, LayoutDashboard, DollarSign, Receipt, Bell, Plus, Pencil, Trash2, RefreshCw, ChevronDown, Upload, Check, TrendingDown, Percent, Calendar } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
