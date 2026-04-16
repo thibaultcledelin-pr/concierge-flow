@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest"
 
 const mockFindMany = vi.fn()
+const mockCount = vi.fn()
 const mockCreate = vi.fn()
 const mockPropertyFindFirst = vi.fn()
 
@@ -8,6 +9,7 @@ vi.mock("@/lib/prisma", () => ({
   prisma: {
     expense: {
       findMany: (...args: unknown[]) => mockFindMany(...args),
+      count: (...args: unknown[]) => mockCount(...args),
       create: (...args: unknown[]) => mockCreate(...args),
     },
     property: {
@@ -42,18 +44,21 @@ describe("Expenses API", () => {
       mockGetUser.mockResolvedValue({ data: { user: { id: "user-1" } } })
       const mockExpenses = [{ id: "1", label: "Ménage", amount: 50 }]
       mockFindMany.mockResolvedValue(mockExpenses)
+      mockCount.mockResolvedValue(1)
 
       const req = new Request("http://localhost/api/expenses")
       const res = await GET(req)
       const data = await res.json()
 
       expect(res.status).toBe(200)
-      expect(data).toEqual(mockExpenses)
+      expect(data.expenses).toEqual(mockExpenses)
+      expect(data.total).toBe(1)
     })
 
     it("filters by propertyId", async () => {
       mockGetUser.mockResolvedValue({ data: { user: { id: "user-1" } } })
       mockFindMany.mockResolvedValue([])
+      mockCount.mockResolvedValue(0)
 
       const req = new Request("http://localhost/api/expenses?propertyId=prop-1")
       await GET(req)
@@ -68,6 +73,7 @@ describe("Expenses API", () => {
     it("filters by category", async () => {
       mockGetUser.mockResolvedValue({ data: { user: { id: "user-1" } } })
       mockFindMany.mockResolvedValue([])
+      mockCount.mockResolvedValue(0)
 
       const req = new Request("http://localhost/api/expenses?category=CLEANING")
       await GET(req)

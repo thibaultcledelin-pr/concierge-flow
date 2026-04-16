@@ -57,7 +57,7 @@ export default function ExpensesPage() {
 
     fetch(`/api/expenses?${params}`)
       .then((res) => res.json())
-      .then(setExpenses)
+      .then((data) => setExpenses(data.expenses || data))
   }, [filterProperty, filterCategory])
 
   useEffect(() => {
