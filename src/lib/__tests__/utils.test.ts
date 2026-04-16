@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest"
-import { formatCurrency, formatDate, calculateMargin, calculateNights, calculateRevenuePerNight, calculateOccupancyRate } from "../utils"
+import { formatCurrency, calculateMargin, calculateNights, calculateRevenuePerNight, calculateOccupancyRate } from "../utils"
 
 describe("utils", () => {
   describe("formatCurrency", () => {
