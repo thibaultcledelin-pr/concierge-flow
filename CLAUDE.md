@@ -46,6 +46,13 @@ src/
 - Si erreur, essaie de résoudre seul avant de remonter
 
 ## Tests
+- `npm test` → lance tous les tests (doit passer en <30s)
+- `npm run test:unit` → tests lib/ seulement (parsers, utils, validators)
+- `npm run test:api` → tests routes API seulement
+- `npm run test:ui` → tests composants et pages
+- `npm run test:watch` → mode watch pendant le dev
+- Avant chaque PR, tous les tests doivent passer
+- On ne push jamais du code qui casse les tests existants
 - Pour chaque feature, crée un dossier __tests__/ à côté des fichiers
 - Utilise Vitest
 - Après chaque feature, lance les tests et confirme que tout passe
