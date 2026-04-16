@@ -15,17 +15,25 @@ export async function GET(request: Request) {
   const propertyId = searchParams.get("propertyId")
   const category = searchParams.get("category")
 
+  const page = Math.max(0, parseInt(searchParams.get("page") || "0"))
+  const limit = Math.min(100, Math.max(1, parseInt(searchParams.get("limit") || "100")))
+
   const where: Record<string, unknown> = { userId: user.id }
   if (propertyId) where.propertyId = propertyId
   if (category) where.category = category
 
-  const expenses = await prisma.expense.findMany({
-    where,
-    include: { property: { select: { name: true } } },
-    orderBy: { date: "desc" },
-  })
+  const [expenses, total] = await Promise.all([
+    prisma.expense.findMany({
+      where,
+      include: { property: { select: { name: true } } },
+      orderBy: { date: "desc" },
+      take: limit,
+      skip: page * limit,
+    }),
+    prisma.expense.count({ where }),
+  ])
 
-  return NextResponse.json(expenses)
+  return NextResponse.json({ expenses, total, page, limit })
 }
 
 export async function POST(request: Request) {
@@ -36,13 +44,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 
-  let body
-  try {
-    body = await request.json()
-  } catch {
-    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 })
-  }
-
+  const body = await request.json()
   const result = expenseSchema.safeParse(body)
 
   if (!result.success) {
