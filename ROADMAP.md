@@ -5,7 +5,7 @@
 
 ## Statut actuel
 📍 **Dernière session** : 2026-04-16
-🔧 **Étape en cours** : 2.0 — CRUD logements
+🔧 **Étape en cours** : 2.1 — Import iCal
 
 ---
 
@@ -36,16 +36,16 @@
 - [x] MobileNav (Sheet responsive)
 - [x] Layout dashboard
 - [x] README.md mis à jour
-- [x] Tests layout ✅ 10/10 (total 23/23)
+- [x] Tests layout ✅ 10/10
 
 ## Semaine 2 — Logements + données
 
 ### 2.0 CRUD logements
-- [ ] API routes (GET, POST, PUT, DELETE)
-- [ ] PropertyForm
-- [ ] Pages (liste, new, detail, edit)
-- [ ] Validation Zod
-- [ ] Tests properties ✅/❌
+- [x] API routes (GET, POST, PUT, DELETE)
+- [x] PropertyForm (react-hook-form + Zod)
+- [x] Pages (liste cards, new, detail, edit)
+- [x] Validation Zod côté serveur
+- [x] Tests properties ✅ 11/11 (total 34/34)
 
 ### 2.1 Import iCal
 - [ ] API sync-ical
@@ -106,10 +106,9 @@
 
 | Date | Problème | Solution |
 |------|----------|----------|
-| 2026-04-16 | shadcn registry blocked (auth required for Nova preset) | Created components manually with shadcn-compatible code |
-| 2026-04-16 | Prisma 7 no longer supports url/directUrl in schema | Moved to prisma.config.ts, used prisma-client generator |
-| 2026-04-16 | git push CLI 403 permission denied | Used GitHub MCP API push_files instead |
-| 2026-04-16 | PR #2 merge didn't include layout commits | Layout commits added after PR creation; re-pushed in PR #3 |
+| 2026-04-16 | shadcn registry blocked | Created components manually |
+| 2026-04-16 | Prisma 7 url/directUrl removed from schema | Moved to prisma.config.ts |
+| 2026-04-16 | git push CLI 403 | Used GitHub MCP API push_files |
 
 ## Décisions techniques
 
@@ -119,15 +118,11 @@
 | 2026-04-16 | iCal + CSV | iCal ne donne pas les montants |
 | 2026-04-16 | Airbnb + Booking au MVP | 80% du marché FR |
 | 2026-04-16 | Vitest | Plus rapide que Jest pour Next.js |
-| 2026-04-16 | Client-side auth forms | Supabase browser client pour login/register, server client pour callback |
-| 2026-04-16 | Violet active state | Cohérent avec le style dark mode, plus visible que neutral accent |
-| 2026-04-16 | Period selector in topbar | Prépare le filtrage global des données par période |
+| 2026-04-16 | react-hook-form + zodResolver | Validation côté client cohérente avec côté serveur |
 
 ## Notes de session
 
 ### Session 1 — 2026-04-16
-- Setup initial du projet (1.0)
-- Auth complète (1.1) : login, register, callback, layout, tests 13/13
-- Layout app complet (1.2) : sidebar violet, topbar avec sélecteur période, mobile-nav, tests 10/10
-- README.md mis à jour avec description projet + instructions dev
-- Semaine 1 terminée — prochaine étape : 2.0 CRUD logements
+- Setup (1.0), Auth (1.1), Layout (1.2) — Semaine 1 terminée
+- CRUD logements (2.0) : API + form + 4 pages + tests 11/11
+- Total : 34 tests passent
