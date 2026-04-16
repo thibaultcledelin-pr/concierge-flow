@@ -21,7 +21,7 @@
 - [x] .env.example créé
 - [x] CLAUDE.md + ROADMAP.md créés
 - [x] npm run dev fonctionne
-- [ ] Premier commit
+- [x] Premier commit
 
 ### 1.1 Auth
 - [ ] Page /login
