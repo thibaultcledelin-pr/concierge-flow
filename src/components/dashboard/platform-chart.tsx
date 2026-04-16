@@ -74,7 +74,8 @@ export function PlatformChart({ data }: PlatformChartProps) {
                 borderRadius: "8px",
                 fontSize: "12px",
               }}
-              formatter={(value: number) => [`${value.toFixed(0)}€`, "Revenus"]}
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              formatter={(value: any) => [`${Number(value).toFixed(0)}€`, "Revenus"]}
             />
             <Legend />
           </PieChart>
