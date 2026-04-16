@@ -1,0 +1,152 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  name      String?
+  company   String?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  properties Property[]
+  expenses   Expense[]
+
+  @@map("users")
+}
+
+model Property {
+  id          String       @id @default(uuid())
+  userId      String       @map("user_id")
+  name        String
+  address     String
+  city        String
+  type        PropertyType @default(APARTMENT)
+  rooms       Int          @default(1)
+  surface     Float?
+  icalUrl     String?      @map("ical_url")
+  icalUrlBooking String?   @map("ical_url_booking")
+  monthlyRent Float?       @map("monthly_rent")
+  imageUrl    String?      @map("image_url")
+  isActive    Boolean      @default(true) @map("is_active")
+  createdAt   DateTime     @default(now()) @map("created_at")
+  updatedAt   DateTime     @updatedAt @map("updated_at")
+
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  bookings Booking[]
+  expenses Expense[]
+
+  @@map("properties")
+}
+
+enum PropertyType {
+  APARTMENT
+  HOUSE
+  STUDIO
+  LOFT
+  VILLA
+  OTHER
+}
+
+model Booking {
+  id          String        @id @default(uuid())
+  propertyId  String        @map("property_id")
+  guestName   String?       @map("guest_name")
+  checkIn     DateTime      @map("check_in")
+  checkOut    DateTime      @map("check_out")
+  nights      Int
+  totalAmount Float         @map("total_amount")
+  netAmount   Float?        @map("net_amount")
+  platform    Platform      @default(AIRBNB)
+  source      BookingSource @default(ICAL)
+  externalId  String?       @unique @map("external_id")
+  createdAt   DateTime      @default(now()) @map("created_at")
+
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@map("bookings")
+}
+
+enum Platform {
+  AIRBNB
+  BOOKING
+  DIRECT
+  OTHER
+}
+
+enum BookingSource {
+  ICAL
+  MANUAL
+  CSV
+}
+
+model Expense {
+  id          String          @id @default(uuid())
+  userId      String          @map("user_id")
+  propertyId  String?         @map("property_id")
+  category    ExpenseCategory
+  label       String
+  amount      Float
+  date        DateTime
+  isRecurring Boolean         @default(false) @map("is_recurring")
+  frequency   Frequency?
+  notes       String?
+  createdAt   DateTime        @default(now()) @map("created_at")
+
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  property Property? @relation(fields: [propertyId], references: [id], onDelete: SetNull)
+
+  @@map("expenses")
+}
+
+enum ExpenseCategory {
+  CLEANING
+  MAINTENANCE
+  SUPPLIES
+  RENT
+  INSURANCE
+  TAX
+  PLATFORM_FEE
+  UTILITIES
+  FURNISHING
+  MARKETING
+  OTHER
+}
+
+enum Frequency {
+  WEEKLY
+  MONTHLY
+  QUARTERLY
+  YEARLY
+}
+
+model Alert {
+  id         String    @id @default(uuid())
+  propertyId String?   @map("property_id")
+  type       AlertType
+  message    String
+  severity   Severity  @default(WARNING)
+  isRead     Boolean   @default(false) @map("is_read")
+  createdAt  DateTime  @default(now()) @map("created_at")
+
+  @@map("alerts")
+}
+
+enum AlertType {
+  LOW_MARGIN
+  HIGH_EXPENSE
+  NO_BOOKING
+  NEGATIVE_PROFIT
+}
+
+enum Severity {
+  INFO
+  WARNING
+  CRITICAL
+}
