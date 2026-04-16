@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { Providers } from "@/components/providers";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -13,8 +14,23 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "ConciergeFlow",
-  description: "Tous vos logements, toutes vos plateformes, une seule marge nette.",
+  title: {
+    default: "ConciergeFlow",
+    template: "%s | ConciergeFlow",
+  },
+  description: "Tous vos logements, toutes vos plateformes, une seule marge nette. SaaS de suivi de rentabilité pour conciergeries Airbnb/Booking.",
+  openGraph: {
+    title: "ConciergeFlow",
+    description: "Suivi de rentabilité pour conciergeries Airbnb/Booking",
+    type: "website",
+    locale: "fr_FR",
+    siteName: "ConciergeFlow",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "ConciergeFlow",
+    description: "Suivi de rentabilité pour conciergeries Airbnb/Booking",
+  },
 };
 
 export default function RootLayout({
@@ -27,7 +43,9 @@ export default function RootLayout({
       lang="fr"
       className={`${geistSans.variable} ${geistMono.variable} dark h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        <Providers>{children}</Providers>
+      </body>
     </html>
   );
 }
