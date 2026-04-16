@@ -3,31 +3,28 @@ import { render, screen } from "@testing-library/react"
 import { StatsCards } from "../stats-cards"
 
 describe("StatsCards", () => {
-  it("renders all four KPI cards", () => {
+  it("renders all three KPI cards", () => {
     render(
       <StatsCards
-        totalRevenue={5000}
-        totalExpenses={2000}
-        totalMargin={60}
         occupancyRate={75}
+        avgRevenuePerNight={120}
+        totalMargin={60}
       />
     )
-    expect(screen.getByText("Revenu total")).toBeInTheDocument()
-    expect(screen.getByText("Dépenses")).toBeInTheDocument()
+    expect(screen.getByText("Occupation moyenne")).toBeInTheDocument()
+    expect(screen.getByText("Revenu net / nuit")).toBeInTheDocument()
     expect(screen.getByText("Marge nette")).toBeInTheDocument()
-    expect(screen.getByText("Taux d'occupation")).toBeInTheDocument()
   })
 
-  it("formats currency values", () => {
+  it("formats values correctly", () => {
     render(
       <StatsCards
-        totalRevenue={5000}
-        totalExpenses={2000}
-        totalMargin={60}
-        occupancyRate={75}
+        occupancyRate={82.5}
+        avgRevenuePerNight={95}
+        totalMargin={45.2}
       />
     )
-    expect(screen.getByText("60%")).toBeInTheDocument()
-    expect(screen.getByText("75%")).toBeInTheDocument()
+    expect(screen.getByText("82.5%")).toBeInTheDocument()
+    expect(screen.getByText("45.2%")).toBeInTheDocument()
   })
 })

@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest"
-import { formatCurrency, formatDate, calculateMargin, calculateNights } from "../utils"
+import { formatCurrency, formatDate, calculateMargin, calculateNights, calculateRevenuePerNight, calculateOccupancyRate } from "../utils"
 
 describe("utils", () => {
   describe("formatCurrency", () => {
@@ -43,6 +43,30 @@ describe("utils", () => {
     it("returns 0 for same day", () => {
       const date = new Date("2026-05-01")
       expect(calculateNights(date, date)).toBe(0)
+    })
+  })
+
+  describe("calculateRevenuePerNight", () => {
+    it("calculates correctly", () => {
+      expect(calculateRevenuePerNight(1000, 200, 5)).toBe(160)
+    })
+
+    it("returns 0 when no nights", () => {
+      expect(calculateRevenuePerNight(1000, 200, 0)).toBe(0)
+    })
+  })
+
+  describe("calculateOccupancyRate", () => {
+    it("calculates percentage correctly", () => {
+      expect(calculateOccupancyRate(15, 30)).toBe(50)
+    })
+
+    it("caps at 100%", () => {
+      expect(calculateOccupancyRate(35, 30)).toBe(100)
+    })
+
+    it("returns 0 when no days", () => {
+      expect(calculateOccupancyRate(10, 0)).toBe(0)
     })
   })
 })
