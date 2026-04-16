@@ -46,19 +46,17 @@ export default function DashboardPage() {
   const [error, setError] = useState(false)
 
   useEffect(() => {
-    let cancelled = false
-    fetch("/api/dashboard")
+    const controller = new AbortController()
+    fetch("/api/dashboard", { signal: controller.signal })
       .then((res) => {
         if (!res.ok) throw new Error()
         return res.json()
       })
-      .then((d) => {
-        if (!cancelled) { setData(d); setLoading(false) }
+      .then((d) => { setData(d); setLoading(false) })
+      .catch((err) => {
+        if (err.name !== "AbortError") { setError(true); setLoading(false) }
       })
-      .catch(() => {
-        if (!cancelled) { setError(true); setLoading(false) }
-      })
-    return () => { cancelled = true }
+    return () => controller.abort()
   }, [])
 
   function retry() {
@@ -98,7 +96,7 @@ export default function DashboardPage() {
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Vue d&apos;ensemble \u2014 {data.stats.propertyCount} logement{data.stats.propertyCount !== 1 ? "s" : ""}
+          Vue d&apos;ensemble — {data.stats.propertyCount} logement{data.stats.propertyCount !== 1 ? "s" : ""}
         </p>
       </div>
 
@@ -110,10 +108,10 @@ export default function DashboardPage() {
         revPAR={data.stats.revPAR}
       />
 
-      {/* Graphe 1 \u2014 Taux d'occupation (pleine largeur) */}
+      {/* Graphe 1 — Taux d'occupation (pleine largeur) */}
       <OccupancyChart data={data.occupancyData} />
 
-      {/* Graphes 2 + 3 c\u00f4te \u00e0 c\u00f4te */}
+      {/* Graphes 2 + 3 côte à côte */}
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2">
           <RevenuePerNightChart data={data.revenuePerNightData} propertyNames={data.propertyNames} />
@@ -121,10 +119,10 @@ export default function DashboardPage() {
         <OccupancyBarChart data={data.occupancyByProperty} />
       </div>
 
-      {/* Graphe 4 \u2014 Revenus vs D\u00e9penses (pleine largeur) */}
+      {/* Graphe 4 — Revenus vs Dépenses (pleine largeur) */}
       <RevenueChart data={data.chartData} />
 
-      {/* Table rentabilit\u00e9 */}
+      {/* Table rentabilité */}
       <ProfitabilityTable data={data.profitability} />
     </div>
   )
