@@ -84,9 +84,8 @@ export function RevenuePerNightChart({ data, propertyNames }: RevenuePerNightCha
                 padding: "12px",
                 fontSize: "12px",
               }}
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              formatter={(value: any, name: any) => [`${Number(value).toFixed(0)}€/nuit`, name]}
-              labelFormatter={(label: any) => formatMonth(String(label))}
+              formatter={(value: number | string, name: number | string) => [`${Number(value).toFixed(0)}€/nuit`, String(name)]}
+              labelFormatter={(label: number | string) => formatMonth(String(label))}
             />
             <Legend iconType="circle" iconSize={8} />
             {propertyNames.map((name, i) => (
