@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, useCallback } from "react"
+import { useEffect, useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Plus, Home, Pencil, Trash2 } from "lucide-react"
@@ -40,7 +40,23 @@ export default function PropertiesPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
 
-  const fetchProperties = useCallback(() => {
+  useEffect(() => {
+    let cancelled = false
+    fetch("/api/properties")
+      .then((res) => {
+        if (!res.ok) throw new Error()
+        return res.json()
+      })
+      .then((data) => {
+        if (!cancelled) { setProperties(data); setLoading(false) }
+      })
+      .catch(() => {
+        if (!cancelled) { setError(true); setLoading(false) }
+      })
+    return () => { cancelled = true }
+  }, [])
+
+  function retryFetch() {
     setError(false)
     setLoading(true)
     fetch("/api/properties")
@@ -48,24 +64,16 @@ export default function PropertiesPage() {
         if (!res.ok) throw new Error()
         return res.json()
       })
-      .then((data) => {
-        setProperties(data)
-        setLoading(false)
-      })
-      .catch(() => {
-        setError(true)
-        setLoading(false)
-      })
-  }, [])
-
-  useEffect(() => { fetchProperties() }, [fetchProperties])
+      .then((data) => { setProperties(data); setLoading(false) })
+      .catch(() => { setError(true); setLoading(false) })
+  }
 
   async function handleDelete(id: string, name: string) {
     if (!confirm("Supprimer ce logement ?")) return
     const res = await fetch(`/api/properties/${id}`, { method: "DELETE" })
     if (res.ok) {
       setProperties((prev) => prev.filter((p) => p.id !== id))
-      toast({ title: "Logement supprimé", description: name })
+      toast({ title: "Logement supprim\u00e9", description: name })
     } else {
       toast({ title: "Erreur", description: "Impossible de supprimer", variant: "destructive" })
     }
@@ -91,7 +99,7 @@ export default function PropertiesPage() {
       {loading ? (
         <CardsLoading />
       ) : error ? (
-        <PageError message="Impossible de charger les logements" onRetry={fetchProperties} />
+        <PageError message="Impossible de charger les logements" onRetry={retryFetch} />
       ) : properties.length === 0 ? (
         <Card>
           <CardContent className="flex flex-col items-center gap-3 py-12">
@@ -119,8 +127,8 @@ export default function PropertiesPage() {
                   </Badge>
                 </div>
                 <div className="mb-4 flex flex-wrap gap-3 text-sm text-muted-foreground">
-                  <span>{property.rooms} pièce{property.rooms > 1 ? "s" : ""}</span>
-                  {property.surface && <span>{property.surface} m²</span>}
+                  <span>{property.rooms} pi\u00e8ce{property.rooms > 1 ? "s" : ""}</span>
+                  {property.surface && <span>{property.surface} m\u00b2</span>}
                   {property.monthlyRent && (
                     <span>{formatCurrency(property.monthlyRent)}/mois</span>
                   )}

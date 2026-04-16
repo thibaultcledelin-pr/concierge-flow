@@ -26,7 +26,9 @@ export function parseIcal(icalData: string): ParsedBooking[] {
 
     if (!dtstart || !dtend || !uid) continue
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const checkIn = (dtstart as any).toJSDate()
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const checkOut = (dtend as any).toJSDate()
     const nights = calculateNights(checkIn, checkOut)
 
