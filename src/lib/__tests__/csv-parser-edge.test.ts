@@ -13,39 +13,33 @@ describe("CSV parser edge cases", () => {
   })
 
   it("handles missing amount columns (defaults to 0)", () => {
-    const csv = `Guest,Start date,End date
-Jean,2026-05-01,2026-05-04`
+    const csv = `Guest,Start date,End date\nJean,2026-05-01,2026-05-04`
     const bookings = parseAirbnbCsv(csv)
     expect(bookings).toHaveLength(1)
     expect(bookings[0].totalAmount).toBe(0)
   })
 
   it("handles amounts with various formats", () => {
-    const csv = `Guest,Start date,End date,Earnings
-Jean,2026-05-01,2026-05-04,1 200€`
+    const csv = `Guest,Start date,End date,Earnings\nJean,2026-05-01,2026-05-04,1 200\u20ac`
     const bookings = parseAirbnbCsv(csv)
     expect(bookings[0].totalAmount).toBe(1200)
   })
 
   it("skips rows with invalid dates", () => {
-    const csv = `Guest,Start date,End date,Earnings
-Jean,not-a-date,also-not-a-date,450`
+    const csv = `Guest,Start date,End date,Earnings\nJean,not-a-date,also-not-a-date,450`
     const bookings = parseAirbnbCsv(csv)
     expect(bookings).toHaveLength(0)
   })
 
   it("handles Booking CSV with empty rows", () => {
-    const csv = `Guest Name,Check-in,Check-out,Total
-,,,,
-Pierre,2026-06-01,2026-06-05,800`
+    const csv = `Guest Name,Check-in,Check-out,Total\n,,,,\nPierre,2026-06-01,2026-06-05,800`
     const bookings = parseBookingCsv(csv)
     expect(bookings).toHaveLength(1)
   })
 
   it("handles special characters in guest names", () => {
-    const csv = `Guest,Start date,End date,Earnings
-François O'Brien,2026-05-01,2026-05-04,450`
+    const csv = `Guest,Start date,End date,Earnings\nFran\u00e7ois O'Brien,2026-05-01,2026-05-04,450`
     const bookings = parseAirbnbCsv(csv)
-    expect(bookings[0].guestName).toBe("François O'Brien")
+    expect(bookings[0].guestName).toBe("Fran\u00e7ois O'Brien")
   })
 })
