@@ -5,7 +5,7 @@
 
 ## Statut actuel
 📍 **Dernière session** : 2026-04-16
-🔧 **Étape en cours** : 2.2 — Import CSV
+🔧 **Étape en cours** : 3.0 — Dépenses
 
 ---
 
@@ -52,15 +52,16 @@
 - [x] Parser ical.js (parseIcal + detectPlatform)
 - [x] Dédoublonnage externalId
 - [x] Composant IcalImport
-- [x] Tests iCal ✅ 17/17 (total 52/52)
+- [x] Tests iCal ✅ 17/17
 
 ### 2.2 Import CSV
-- [ ] Parser CSV Airbnb (Papaparse)
-- [ ] Parser CSV Booking
-- [ ] Matching avec bookings existants
-- [ ] Composant CsvImport
-- [ ] Page /revenue
-- [ ] Tests CSV ✅/❌
+- [x] Parser CSV Airbnb (Papaparse) — parseAirbnbCsv
+- [x] Parser CSV Booking — parseBookingCsv
+- [x] Matching avec bookings existants (enrichissement montants)
+- [x] Composant CsvImport (upload + auto-detect platform)
+- [x] Page /revenue (sélecteur logement, import CSV, table réservations)
+- [x] API GET /api/properties/[id]/bookings
+- [x] Tests CSV ✅ 21/21 (total 73/73)
 
 ## Semaine 3 — Dépenses + dashboard
 
@@ -107,9 +108,10 @@
 | Date | Problème | Solution |
 |------|----------|----------|
 | 2026-04-16 | shadcn registry blocked | Created components manually |
-| 2026-04-16 | Prisma 7 url/directUrl removed from schema | Moved to prisma.config.ts |
-| 2026-04-16 | git push CLI 403 | Used GitHub MCP API push_files |
-| 2026-04-16 | Select renders "Appartement" twice in DOM | Used getAllByText in test |
+| 2026-04-16 | Prisma 7 url/directUrl removed | Moved to prisma.config.ts |
+| 2026-04-16 | git push CLI 403 | Used GitHub MCP push_files |
+| 2026-04-16 | Select renders text twice in DOM | Used getAllByText in test |
+| 2026-04-16 | File.text() unreliable in jsdom tests | Mocked csv-parser module in API tests |
 
 ## Décisions techniques
 
@@ -119,12 +121,14 @@
 | 2026-04-16 | iCal + CSV | iCal ne donne pas les montants |
 | 2026-04-16 | Airbnb + Booking au MVP | 80% du marché FR |
 | 2026-04-16 | Vitest | Plus rapide que Jest pour Next.js |
-| 2026-04-16 | totalAmount=0 pour iCal bookings | iCal ne fournit pas les montants, sera enrichi par CSV |
+| 2026-04-16 | totalAmount=0 pour iCal | Enrichi ensuite par CSV |
+| 2026-04-16 | CSV matching par dates+platform | Enrichit les bookings iCal existants avec les montants CSV |
+| 2026-04-16 | Auto-detect CSV platform | Détection par headers (Confirmation code → Airbnb, Commission → Booking) |
 
 ## Notes de session
 
 ### Session 1 — 2026-04-16
-- Setup (1.0), Auth (1.1), Layout (1.2) — Semaine 1 terminée
-- CRUD logements (2.0) : API + form + 4 pages + tests
-- Import iCal (2.1) : parser ical.js, sync API, dédoublonnage, composant IcalImport
-- Total : 52 tests passent
+- Semaine 1 : Setup (1.0), Auth (1.1), Layout (1.2)
+- Semaine 2 : CRUD logements (2.0), Import iCal (2.1), Import CSV (2.2)
+- Total : 73 tests passent
+- Prochaine étape : 3.0 Dépenses
