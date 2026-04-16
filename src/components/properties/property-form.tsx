@@ -6,6 +6,7 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { propertySchema } from "@/lib/validators"
+import { useToast } from "@/hooks/use-toast"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -36,6 +37,7 @@ interface PropertyFormProps {
 
 export function PropertyForm({ defaultValues, propertyId }: PropertyFormProps) {
   const router = useRouter()
+  const { toast } = useToast()
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const isEditing = !!propertyId
@@ -47,7 +49,8 @@ export function PropertyForm({ defaultValues, propertyId }: PropertyFormProps) {
     watch,
     formState: { errors },
   } = useForm<PropertyFormData>({
-    resolver: zodResolver(propertySchema),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    resolver: zodResolver(propertySchema) as any,
     defaultValues: {
       name: "",
       address: "",
@@ -82,6 +85,10 @@ export function PropertyForm({ defaultValues, propertyId }: PropertyFormProps) {
       return
     }
 
+    toast({
+      title: isEditing ? "Logement modifié" : "Logement créé",
+      description: data.name,
+    })
     router.push("/properties")
     router.refresh()
   }
@@ -148,7 +155,7 @@ export function PropertyForm({ defaultValues, propertyId }: PropertyFormProps) {
               </Select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="rooms">Pi\u00e8ces</Label>
+              <Label htmlFor="rooms">Pièces</Label>
               <Input
                 id="rooms"
                 type="number"
@@ -157,7 +164,7 @@ export function PropertyForm({ defaultValues, propertyId }: PropertyFormProps) {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="surface">Surface (m\u00b2)</Label>
+              <Label htmlFor="surface">Surface (m²)</Label>
               <Input
                 id="surface"
                 type="number"
@@ -169,7 +176,7 @@ export function PropertyForm({ defaultValues, propertyId }: PropertyFormProps) {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="monthlyRent">Loyer mensuel (\u20ac)</Label>
+            <Label htmlFor="monthlyRent">Loyer mensuel (€)</Label>
             <Input
               id="monthlyRent"
               type="number"
@@ -203,8 +210,8 @@ export function PropertyForm({ defaultValues, propertyId }: PropertyFormProps) {
         <CardFooter className="flex gap-3">
           <Button type="submit" disabled={loading}>
             {loading
-              ? isEditing ? "Enregistrement..." : "Cr\u00e9ation..."
-              : isEditing ? "Enregistrer" : "Cr\u00e9er le logement"}
+              ? isEditing ? "Enregistrement..." : "Création..."
+              : isEditing ? "Enregistrer" : "Créer le logement"}
           </Button>
           <Button
             type="button"
