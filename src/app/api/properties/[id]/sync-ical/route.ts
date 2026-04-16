@@ -23,12 +23,24 @@ export async function POST(
     return NextResponse.json({ error: "Not found" }, { status: 404 })
   }
 
+  function isAllowedUrl(url: string): boolean {
+    try {
+      const parsed = new URL(url)
+      if (parsed.protocol !== "https:") return false
+      const host = parsed.hostname.toLowerCase()
+      if (host === "localhost" || host === "127.0.0.1" || host.startsWith("192.168.") || host.startsWith("10.") || host === "0.0.0.0") return false
+      return true
+    } catch {
+      return false
+    }
+  }
+
   const urls: { url: string; platform: "AIRBNB" | "BOOKING" | "OTHER" }[] = []
 
-  if (property.icalUrl) {
+  if (property.icalUrl && isAllowedUrl(property.icalUrl)) {
     urls.push({ url: property.icalUrl, platform: detectPlatform(property.icalUrl) })
   }
-  if (property.icalUrlBooking) {
+  if (property.icalUrlBooking && isAllowedUrl(property.icalUrlBooking)) {
     urls.push({ url: property.icalUrlBooking, platform: detectPlatform(property.icalUrlBooking) })
   }
 
@@ -47,7 +59,7 @@ export async function POST(
     try {
       const response = await fetch(url)
       if (!response.ok) {
-        errors.push(`Failed to fetch ${platform} iCal: ${response.status}`)
+        errors.push(`Failed to fetch ${platform} iCal`)
         continue
       }
 
@@ -79,8 +91,8 @@ export async function POST(
         })
         created++
       }
-    } catch (err) {
-      errors.push(`Error processing ${platform} iCal: ${err instanceof Error ? err.message : "Unknown error"}`)
+    } catch {
+      errors.push(`Error processing ${platform} iCal`)
     }
   }
 

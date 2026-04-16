@@ -7,8 +7,8 @@ export const propertySchema = z.object({
   type: z.enum(['APARTMENT', 'HOUSE', 'STUDIO', 'LOFT', 'VILLA', 'OTHER']),
   rooms: z.number().int().min(1),
   surface: z.number().positive().optional(),
-  icalUrl: z.string().url().optional().or(z.literal('')),
-  icalUrlBooking: z.string().url().optional().or(z.literal('')),
+  icalUrl: z.string().url().refine(url => url.startsWith('https://'), { message: 'URL doit \u00eatre en HTTPS' }).optional().or(z.literal('')),
+  icalUrlBooking: z.string().url().refine(url => url.startsWith('https://'), { message: 'URL doit \u00eatre en HTTPS' }).optional().or(z.literal('')),
   monthlyRent: z.number().positive().optional(),
 })
 
