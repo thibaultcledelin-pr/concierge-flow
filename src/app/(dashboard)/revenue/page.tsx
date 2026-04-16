@@ -59,7 +59,7 @@ export default function RevenuePage() {
     if (!selectedProperty) return
     fetch(`/api/properties/${selectedProperty}/bookings`)
       .then((res) => res.json())
-      .then(setBookings)
+      .then((data) => setBookings(data.bookings || data))
       .catch(() => setBookings([]))
   }, [selectedProperty])
 
@@ -119,7 +119,7 @@ export default function RevenuePage() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="text-base">
-                R\u00e9servations ({bookings.length})
+                Réservations ({bookings.length})
               </CardTitle>
               {totalRevenue > 0 && (
                 <span className="text-sm font-semibold text-green-400">
@@ -130,7 +130,7 @@ export default function RevenuePage() {
             <CardContent>
               {bookings.length === 0 ? (
                 <p className="py-4 text-center text-sm text-muted-foreground">
-                  Aucune r\u00e9servation. Synchronisez le iCal ou importez un CSV.
+                  Aucune réservation. Synchronisez le iCal ou importez un CSV.
                 </p>
               ) : (
                 <Table>
@@ -147,12 +147,12 @@ export default function RevenuePage() {
                   <TableBody>
                     {bookings.map((b) => (
                       <TableRow key={b.id}>
-                        <TableCell>{b.guestName || "\u2014"}</TableCell>
+                        <TableCell>{b.guestName || "—"}</TableCell>
                         <TableCell>{formatDate(b.checkIn)}</TableCell>
                         <TableCell>{formatDate(b.checkOut)}</TableCell>
                         <TableCell className="text-center">{b.nights}</TableCell>
                         <TableCell className="text-right">
-                          {b.totalAmount > 0 ? formatCurrency(b.totalAmount) : "\u2014"}
+                          {b.totalAmount > 0 ? formatCurrency(b.totalAmount) : "—"}
                         </TableCell>
                         <TableCell>
                           <Badge variant="secondary" className="text-xs">
