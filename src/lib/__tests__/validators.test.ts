@@ -58,6 +58,30 @@ describe("propertySchema", () => {
     expect(result.success).toBe(false)
   })
 
+  it("rejects HTTP iCal URL (must be HTTPS)", () => {
+    const result = propertySchema.safeParse({
+      name: "Test",
+      address: "12 rue",
+      city: "Paris",
+      type: "APARTMENT",
+      rooms: 1,
+      icalUrl: "http://www.airbnb.com/calendar/ical/123.ics",
+    })
+    expect(result.success).toBe(false)
+  })
+
+  it("accepts HTTPS iCal URL", () => {
+    const result = propertySchema.safeParse({
+      name: "Test",
+      address: "12 rue",
+      city: "Paris",
+      type: "APARTMENT",
+      rooms: 1,
+      icalUrl: "https://www.airbnb.com/calendar/ical/123.ics",
+    })
+    expect(result.success).toBe(true)
+  })
+
   it("accepts empty string for optional iCal URL", () => {
     const result = propertySchema.safeParse({
       name: "Test",
@@ -75,7 +99,7 @@ describe("expenseSchema", () => {
   it("accepts valid expense data", () => {
     const result = expenseSchema.safeParse({
       category: "CLEANING",
-      label: "Ménage",
+      label: "M\u00e9nage",
       amount: 50,
       date: "2026-05-01",
     })
