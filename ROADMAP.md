@@ -5,7 +5,7 @@
 
 ## Statut actuel
 📍 **Dernière session** : 2026-04-16
-🔧 **Étape en cours** : 1.2 — Layout app
+🔧 **Étape en cours** : 3.0 — Dépenses
 
 ---
 
@@ -31,35 +31,37 @@
 - [x] Tests auth ✅ 13/13
 
 ### 1.2 Layout app
-- [ ] Sidebar
-- [ ] Topbar
-- [ ] MobileNav
-- [ ] Layout dashboard
-- [ ] Tests layout ✅/❌
+- [x] Sidebar (violet active state, icônes Lucide)
+- [x] Topbar (avatar, sélecteur période, déconnexion)
+- [x] MobileNav (Sheet responsive)
+- [x] Layout dashboard
+- [x] README.md mis à jour
+- [x] Tests layout ✅ 10/10
 
 ## Semaine 2 — Logements + données
 
 ### 2.0 CRUD logements
-- [ ] API routes (GET, POST, PUT, DELETE)
-- [ ] PropertyForm
-- [ ] Pages (liste, new, detail, edit)
-- [ ] Validation Zod
-- [ ] Tests properties ✅/❌
+- [x] API routes (GET, POST, PUT, DELETE)
+- [x] PropertyForm (react-hook-form + Zod)
+- [x] Pages (liste cards, new, detail, edit)
+- [x] Validation Zod côté serveur
+- [x] Tests properties ✅ 11/11
 
 ### 2.1 Import iCal
-- [ ] API sync-ical
-- [ ] Parser ical.js
-- [ ] Dédoublonnage externalId
-- [ ] Composant IcalImport
-- [ ] Tests iCal ✅/❌
+- [x] API sync-ical (POST /api/properties/[id]/sync-ical)
+- [x] Parser ical.js (parseIcal + detectPlatform)
+- [x] Dédoublonnage externalId
+- [x] Composant IcalImport
+- [x] Tests iCal ✅ 17/17
 
 ### 2.2 Import CSV
-- [ ] Parser CSV Airbnb (Papaparse)
-- [ ] Parser CSV Booking
-- [ ] Matching avec bookings existants
-- [ ] Composant CsvImport
-- [ ] Page /revenue
-- [ ] Tests CSV ✅/❌
+- [x] Parser CSV Airbnb (Papaparse) — parseAirbnbCsv
+- [x] Parser CSV Booking — parseBookingCsv
+- [x] Matching avec bookings existants (enrichissement montants)
+- [x] Composant CsvImport (upload + auto-detect platform)
+- [x] Page /revenue (sélecteur logement, import CSV, table réservations)
+- [x] API GET /api/properties/[id]/bookings
+- [x] Tests CSV ✅ 21/21 (total 73/73)
 
 ## Semaine 3 — Dépenses + dashboard
 
@@ -105,9 +107,11 @@
 
 | Date | Problème | Solution |
 |------|----------|----------|
-| 2026-04-16 | shadcn registry blocked (auth required for Nova preset) | Created components manually with shadcn-compatible code |
-| 2026-04-16 | Prisma 7 no longer supports url/directUrl in schema | Moved to prisma.config.ts, used prisma-client generator |
-| 2026-04-16 | git push CLI 403 permission denied | Used GitHub MCP API push_files instead |
+| 2026-04-16 | shadcn registry blocked | Created components manually |
+| 2026-04-16 | Prisma 7 url/directUrl removed | Moved to prisma.config.ts |
+| 2026-04-16 | git push CLI 403 | Used GitHub MCP push_files |
+| 2026-04-16 | Select renders text twice in DOM | Used getAllByText in test |
+| 2026-04-16 | File.text() unreliable in jsdom tests | Mocked csv-parser module in API tests |
 
 ## Décisions techniques
 
@@ -117,11 +121,14 @@
 | 2026-04-16 | iCal + CSV | iCal ne donne pas les montants |
 | 2026-04-16 | Airbnb + Booking au MVP | 80% du marché FR |
 | 2026-04-16 | Vitest | Plus rapide que Jest pour Next.js |
-| 2026-04-16 | Client-side auth forms | Supabase browser client pour login/register, server client pour callback |
+| 2026-04-16 | totalAmount=0 pour iCal | Enrichi ensuite par CSV |
+| 2026-04-16 | CSV matching par dates+platform | Enrichit les bookings iCal existants avec les montants CSV |
+| 2026-04-16 | Auto-detect CSV platform | Détection par headers (Confirmation code → Airbnb, Commission → Booking) |
 
 ## Notes de session
 
 ### Session 1 — 2026-04-16
-- Setup initial du projet (1.0)
-- shadcn components created manually (registry auth issue)
-- Auth complète (1.1) : login, register, callback, layout, tests 13/13
+- Semaine 1 : Setup (1.0), Auth (1.1), Layout (1.2)
+- Semaine 2 : CRUD logements (2.0), Import iCal (2.1), Import CSV (2.2)
+- Total : 73 tests passent
+- Prochaine étape : 3.0 Dépenses
