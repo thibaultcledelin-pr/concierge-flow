@@ -2,9 +2,11 @@
 
 import { useEffect, useState, useCallback } from "react"
 import { StatsCards } from "@/components/dashboard/stats-cards"
+import { OccupancyChart } from "@/components/dashboard/occupancy-chart"
+import { RevenuePerNightChart } from "@/components/dashboard/revenue-per-night-chart"
+import { OccupancyBarChart } from "@/components/dashboard/occupancy-bar-chart"
 import { RevenueChart } from "@/components/dashboard/revenue-chart"
 import { ProfitabilityTable } from "@/components/dashboard/profitability-table"
-import { PlatformChart } from "@/components/dashboard/platform-chart"
 import { PageLoading } from "@/components/ui/page-loading"
 import { PageError } from "@/components/ui/page-error"
 
@@ -15,6 +17,7 @@ interface DashboardData {
     totalProfit: number
     totalMargin: number
     occupancyRate: number
+    avgRevenuePerNight: number
     propertyCount: number
   }
   profitability: {
@@ -28,16 +31,12 @@ interface DashboardData {
     nights: number
     bookings: number
   }[]
-  chartData: {
-    month: string
-    revenue: number
-    expenses: number
-    profit: number
-  }[]
-  platformData: {
-    name: string
-    value: number
-  }[]
+  chartData: { month: string; revenue: number; expenses: number; profit: number }[]
+  occupancyData: { month: string; occupancy: number }[]
+  revenuePerNightData: Record<string, string | number>[]
+  propertyNames: string[]
+  occupancyByProperty: { name: string; occupancy: number }[]
+  platformData: { name: string; value: number }[]
 }
 
 export default function DashboardPage() {
@@ -94,20 +93,28 @@ export default function DashboardPage() {
         </p>
       </div>
 
+      {/* 3 KPI cards */}
       <StatsCards
-        totalRevenue={data.stats.totalRevenue}
-        totalExpenses={data.stats.totalExpenses}
-        totalMargin={data.stats.totalMargin}
         occupancyRate={data.stats.occupancyRate}
+        avgRevenuePerNight={data.stats.avgRevenuePerNight}
+        totalMargin={data.stats.totalMargin}
       />
 
+      {/* Graphe 1 — Taux d'occupation (pleine largeur) */}
+      <OccupancyChart data={data.occupancyData} />
+
+      {/* Graphes 2 + 3 côte à côte */}
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2">
-          <RevenueChart data={data.chartData} />
+          <RevenuePerNightChart data={data.revenuePerNightData} propertyNames={data.propertyNames} />
         </div>
-        <PlatformChart data={data.platformData} />
+        <OccupancyBarChart data={data.occupancyByProperty} />
       </div>
 
+      {/* Graphe 4 — Revenus vs Dépenses (pleine largeur) */}
+      <RevenueChart data={data.chartData} />
+
+      {/* Table rentabilité */}
       <ProfitabilityTable data={data.profitability} />
     </div>
   )
