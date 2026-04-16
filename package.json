@@ -7,8 +7,11 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "vitest",
-    "test:run": "vitest run"
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:unit": "vitest run --dir src/lib",
+    "test:api": "vitest run --dir src/app/api",
+    "test:ui": "vitest run 'src/app/(auth)' 'src/app/(dashboard)' src/components"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
