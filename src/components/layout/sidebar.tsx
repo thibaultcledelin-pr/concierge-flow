@@ -25,7 +25,9 @@ export function Sidebar() {
   return (
     <aside className="hidden w-60 shrink-0 border-r border-border bg-card lg:block">
       <div className="flex h-14 items-center gap-2 border-b border-border px-4">
-        <div className="h-7 w-7 rounded-lg bg-primary" />
+        <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-violet-600 text-xs font-bold text-white">
+          C
+        </div>
         <span className="text-sm font-bold tracking-tight">ConciergeFlow</span>
       </div>
       <nav className="flex flex-col gap-1 p-3">
@@ -39,7 +41,7 @@ export function Sidebar() {
               className={cn(
                 "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
                 isActive
-                  ? "bg-accent text-accent-foreground"
+                  ? "bg-violet-600/15 text-violet-400"
                   : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"
               )}
             >
