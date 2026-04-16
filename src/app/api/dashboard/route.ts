@@ -56,6 +56,8 @@ export async function GET() {
       margin: Math.round(margin * 10) / 10,
       nights,
       bookings: property.bookings.length,
+      occupancy: totalDaysAvailable > 0 ? Math.round((nights / 30) * 1000) / 10 : 0,
+      revenuePerNight: nights > 0 ? Math.round(((revenue - expenses) / nights) * 10) / 10 : 0,
     }
   })
 
@@ -69,18 +71,36 @@ export async function GET() {
   const occupancyRate = totalDaysAvailable > 0
     ? Math.round((totalNights / totalDaysAvailable) * 1000) / 10
     : 0
+  const avgRevenuePerNight = totalNights > 0
+    ? Math.round((totalProfit / totalNights) * 10) / 10
+    : 0
 
+  // Monthly data for charts
   const monthlyRevenue: Record<string, number> = {}
   const monthlyExpenses: Record<string, number> = {}
+  const monthlyNights: Record<string, number> = {}
+  const monthlyPropertyNights: Record<string, Record<string, number>> = {}
+  const monthlyPropertyRevenue: Record<string, Record<string, number>> = {}
+  const monthlyPropertyExpenses: Record<string, Record<string, number>> = {}
 
   for (const property of properties) {
-    for (const booking of property.bookings) {
+    for (const booking of (property as any).bookings) {
       const month = new Date(booking.checkIn).toISOString().slice(0, 7)
       monthlyRevenue[month] = (monthlyRevenue[month] || 0) + booking.totalAmount
+      monthlyNights[month] = (monthlyNights[month] || 0) + booking.nights
+
+      if (!monthlyPropertyNights[month]) monthlyPropertyNights[month] = {}
+      monthlyPropertyNights[month][property.name] = (monthlyPropertyNights[month][property.name] || 0) + booking.nights
+
+      if (!monthlyPropertyRevenue[month]) monthlyPropertyRevenue[month] = {}
+      monthlyPropertyRevenue[month][property.name] = (monthlyPropertyRevenue[month][property.name] || 0) + booking.totalAmount
     }
-    for (const expense of property.expenses) {
+    for (const expense of (property as any).expenses) {
       const month = new Date(expense.date).toISOString().slice(0, 7)
       monthlyExpenses[month] = (monthlyExpenses[month] || 0) + expense.amount
+
+      if (!monthlyPropertyExpenses[month]) monthlyPropertyExpenses[month] = {}
+      monthlyPropertyExpenses[month][property.name] = (monthlyPropertyExpenses[month][property.name] || 0) + expense.amount
     }
   }
   for (const expense of globalExpenses) {
@@ -89,12 +109,43 @@ export async function GET() {
   }
 
   const allMonths = [...new Set([...Object.keys(monthlyRevenue), ...Object.keys(monthlyExpenses)])].sort()
+
   const chartData = allMonths.map((month) => ({
     month,
     revenue: monthlyRevenue[month] || 0,
     expenses: monthlyExpenses[month] || 0,
     profit: (monthlyRevenue[month] || 0) - (monthlyExpenses[month] || 0),
   }))
+
+  // Occupancy timeline
+  const occupancyData = allMonths.map((month) => {
+    const daysInMonth = new Date(parseInt(month.slice(0, 4)), parseInt(month.slice(5, 7)), 0).getDate()
+    const nights = monthlyNights[month] || 0
+    const totalAvailable = daysInMonth * properties.length
+    return {
+      month,
+      occupancy: totalAvailable > 0 ? Math.round((nights / totalAvailable) * 1000) / 10 : 0,
+    }
+  })
+
+  // Revenue per night per property
+  const propertyNames = properties.map((p) => p.name)
+  const revenuePerNightData = allMonths.slice(-6).map((month) => {
+    const point: Record<string, string | number> = { month }
+    for (const name of propertyNames) {
+      const rev = monthlyPropertyRevenue[month]?.[name] || 0
+      const exp = monthlyPropertyExpenses[month]?.[name] || 0
+      const nights = monthlyPropertyNights[month]?.[name] || 0
+      point[name] = nights > 0 ? Math.round(((rev - exp) / nights) * 10) / 10 : 0
+    }
+    return point
+  })
+
+  // Occupancy per property (bar chart)
+  const occupancyByProperty = profitability.map((p) => ({
+    name: p.propertyName,
+    occupancy: p.occupancy,
+  })).sort((a: any, b: any) => b.occupancy - a.occupancy)
 
   const platformData = Object.entries(platformRevenue).map(([name, value]) => ({
     name,
@@ -108,10 +159,15 @@ export async function GET() {
       totalProfit,
       totalMargin,
       occupancyRate,
+      avgRevenuePerNight,
       propertyCount: properties.length,
     },
     profitability: profitability.sort((a: any, b: any) => b.margin - a.margin),
     chartData,
+    occupancyData,
+    revenuePerNightData,
+    propertyNames,
+    occupancyByProperty,
     platformData,
   })
 }
