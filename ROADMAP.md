@@ -5,7 +5,7 @@
 
 ## Statut actuel
 📍 **Dernière session** : 2026-04-16
-🔧 **Étape en cours** : 1.2 — Layout app
+🔧 **Étape en cours** : 2.0 — CRUD logements
 
 ---
 
@@ -31,11 +31,11 @@
 - [x] Tests auth ✅ 13/13
 
 ### 1.2 Layout app
-- [ ] Sidebar
-- [ ] Topbar
-- [ ] MobileNav
-- [ ] Layout dashboard
-- [ ] Tests layout ✅/❌
+- [x] Sidebar
+- [x] Topbar
+- [x] MobileNav
+- [x] Layout dashboard
+- [x] Tests layout ✅ 9/9 (total 22/22)
 
 ## Semaine 2 — Logements + données
 
@@ -118,6 +118,7 @@
 | 2026-04-16 | Airbnb + Booking au MVP | 80% du marché FR |
 | 2026-04-16 | Vitest | Plus rapide que Jest pour Next.js |
 | 2026-04-16 | Client-side auth forms | Supabase browser client pour login/register, server client pour callback |
+| 2026-04-16 | Sidebar hidden on mobile, Sheet for nav | Responsive sans duplication de code |
 
 ## Notes de session
 
@@ -125,3 +126,5 @@
 - Setup initial du projet (1.0)
 - shadcn components created manually (registry auth issue)
 - Auth complète (1.1) : login, register, callback, layout, tests 13/13
+- Layout app complet (1.2) : sidebar, topbar, mobile-nav, dashboard layout, tests 9/9
+- Semaine 1 terminée — prochaine étape : 2.0 CRUD logements
