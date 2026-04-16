@@ -40,7 +40,13 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Property not found" }, { status: 404 })
   }
 
-  const csvData = await file.text()
+  let csvData: string
+  try {
+    csvData = await file.text()
+  } catch {
+    return NextResponse.json({ error: "Failed to read file" }, { status: 400 })
+  }
+
   const platform = platformOverride || detectCsvPlatform(csvData)
 
   let bookings
