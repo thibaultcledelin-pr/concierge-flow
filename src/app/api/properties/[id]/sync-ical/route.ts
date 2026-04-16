@@ -57,7 +57,7 @@ export async function POST(
 
   for (const { url, platform } of urls) {
     try {
-      const response = await fetch(url)
+      const response = await fetch(url, { signal: AbortSignal.timeout(10000) })
       if (!response.ok) {
         errors.push(`Failed to fetch ${platform} iCal`)
         continue
@@ -91,7 +91,8 @@ export async function POST(
         })
         created++
       }
-    } catch {
+    } catch (err) {
+      console.error(`[sync-ical] Error processing ${platform} iCal for property ${property.id}:`, err)
       errors.push(`Error processing ${platform} iCal`)
     }
   }
