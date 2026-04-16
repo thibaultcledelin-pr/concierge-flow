@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma"
 import { createClient } from "@/lib/supabase/server"
 
 export async function GET(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params
@@ -22,10 +22,19 @@ export async function GET(
     return NextResponse.json({ error: "Not found" }, { status: 404 })
   }
 
-  const bookings = await prisma.booking.findMany({
-    where: { propertyId: id },
-    orderBy: { checkIn: "desc" },
-  })
+  const { searchParams } = new URL(request.url)
+  const page = Math.max(0, parseInt(searchParams.get("page") || "0"))
+  const limit = Math.min(100, Math.max(1, parseInt(searchParams.get("limit") || "100")))
 
-  return NextResponse.json(bookings)
+  const [bookings, total] = await Promise.all([
+    prisma.booking.findMany({
+      where: { propertyId: id },
+      orderBy: { checkIn: "desc" },
+      take: limit,
+      skip: page * limit,
+    }),
+    prisma.booking.count({ where: { propertyId: id } }),
+  ])
+
+  return NextResponse.json({ bookings, total, page, limit })
 }
