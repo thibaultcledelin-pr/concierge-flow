@@ -43,16 +43,20 @@ export function CsvImport({ propertyId }: CsvImportProps) {
       formData.append("platform", platform)
     }
 
-    const res = await fetch("/api/revenue/import-csv", {
-      method: "POST",
-      body: formData,
-    })
+    try {
+      const res = await fetch("/api/revenue/import-csv", {
+        method: "POST",
+        body: formData,
+      })
 
-    const data = await res.json()
-    if (!res.ok) {
-      setResult({ created: 0, matched: 0, total: 0, error: data.error })
-    } else {
-      setResult(data)
+      const data = await res.json().catch(() => ({ error: "Réponse serveur invalide" }))
+      if (!res.ok) {
+        setResult({ created: 0, matched: 0, total: 0, error: data.error || "Erreur serveur" })
+      } else {
+        setResult(data)
+      }
+    } catch {
+      setResult({ created: 0, matched: 0, total: 0, error: "Erreur réseau" })
     }
     setLoading(false)
   }
@@ -111,17 +115,17 @@ export function CsvImport({ propertyId }: CsvImportProps) {
               {result.created > 0 && (
                 <p className="flex items-center gap-2 text-sm text-green-400">
                   <Check className="h-4 w-4" />
-                  {result.created} r\u00e9servation{result.created > 1 ? "s" : ""} cr\u00e9\u00e9e{result.created > 1 ? "s" : ""}
+                  {result.created} réservation{result.created > 1 ? "s" : ""} créée{result.created > 1 ? "s" : ""}
                 </p>
               )}
               {result.matched > 0 && (
                 <p className="text-sm text-muted-foreground">
-                  {result.matched} existante{result.matched > 1 ? "s" : ""} enrichie{result.matched > 1 ? "s" : ""} (montants ajout\u00e9s)
+                  {result.matched} existante{result.matched > 1 ? "s" : ""} enrichie{result.matched > 1 ? "s" : ""} (montants ajoutés)
                 </p>
               )}
               {result.created === 0 && result.matched === 0 && (
                 <p className="text-sm text-muted-foreground">
-                  Aucune nouvelle r\u00e9servation dans ce fichier.
+                  Aucune nouvelle réservation dans ce fichier.
                 </p>
               )}
             </>

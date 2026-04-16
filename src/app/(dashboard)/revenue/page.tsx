@@ -47,10 +47,17 @@ export default function RevenuePage() {
 
   useEffect(() => {
     fetch("/api/properties")
-      .then((res) => res.json())
+      .then((res) => {
+        if (!res.ok) throw new Error()
+        return res.json()
+      })
       .then((data) => {
         setProperties(data)
         if (data.length > 0) setSelectedProperty(data[0].id)
+        setLoading(false)
+      })
+      .catch(() => {
+        setProperties([])
         setLoading(false)
       })
   }, [])
@@ -58,7 +65,10 @@ export default function RevenuePage() {
   useEffect(() => {
     if (!selectedProperty) return
     fetch(`/api/properties/${selectedProperty}/bookings`)
-      .then((res) => res.json())
+      .then((res) => {
+        if (!res.ok) throw new Error()
+        return res.json()
+      })
       .then((data) => setBookings(data.bookings || data))
       .catch(() => setBookings([]))
   }, [selectedProperty])

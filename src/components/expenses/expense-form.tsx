@@ -100,8 +100,8 @@ export function ExpenseForm({
     setError(null)
     setLoading(true)
 
-    const url = isEditing
-      ? `/api/expenses/${defaultValues!.id}`
+    const url = isEditing && defaultValues?.id
+      ? `/api/expenses/${defaultValues.id}`
       : "/api/expenses"
     const method = isEditing ? "PUT" : "POST"
 
