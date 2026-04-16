@@ -18,7 +18,7 @@ export const expenseSchema = z.object({
     'CLEANING', 'MAINTENANCE', 'SUPPLIES', 'RENT', 'INSURANCE',
     'TAX', 'PLATFORM_FEE', 'UTILITIES', 'FURNISHING', 'MARKETING', 'OTHER'
   ]),
-  label: z.string().min(1, 'Libellé requis'),
+  label: z.string().min(1, 'Libell\u00e9 requis'),
   amount: z.number().positive('Montant requis'),
   date: z.string().or(z.date()),
   isRecurring: z.boolean().default(false),
