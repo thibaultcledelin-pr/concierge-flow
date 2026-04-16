@@ -18,9 +18,14 @@ describe("Topbar", () => {
     expect(screen.getByRole("button", { name: /ouvrir le menu/i })).toBeInTheDocument()
   })
 
-  it("renders user avatar", () => {
+  it("renders user avatar with initials", () => {
     render(<Topbar onMenuClick={vi.fn()} />)
     expect(screen.getByText("CF")).toBeInTheDocument()
+  })
+
+  it("renders period selector", () => {
+    render(<Topbar onMenuClick={vi.fn()} />)
+    expect(screen.getByText("Ce mois")).toBeInTheDocument()
   })
 
   it("calls onMenuClick when menu button is clicked", () => {
