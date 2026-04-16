@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { useRouter } from "next/navigation"
+import { useToast } from "@/hooks/use-toast"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
@@ -66,6 +66,7 @@ export function ExpenseForm({
   defaultValues,
   onSuccess,
 }: ExpenseFormProps) {
+  const { toast } = useToast()
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const isEditing = !!defaultValues?.id
@@ -78,7 +79,8 @@ export function ExpenseForm({
     reset,
     formState: { errors },
   } = useForm<ExpenseFormData>({
-    resolver: zodResolver(expenseSchema),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    resolver: zodResolver(expenseSchema) as any,
     defaultValues: {
       category: "OTHER",
       label: "",
@@ -116,6 +118,10 @@ export function ExpenseForm({
       return
     }
 
+    toast({
+      title: isEditing ? "Dépense modifiée" : "Dépense ajoutée",
+      description: data.label,
+    })
     reset()
     onOpenChange(false)
     onSuccess()
