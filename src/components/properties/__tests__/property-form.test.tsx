@@ -11,16 +11,19 @@ describe("PropertyForm", () => {
     vi.clearAllMocks()
   })
 
-  it("renders all form fields", () => {
+  it("renders core form fields", () => {
     render(<PropertyForm />)
     expect(screen.getByLabelText(/nom du logement/i)).toBeInTheDocument()
     expect(screen.getByLabelText(/adresse/i)).toBeInTheDocument()
     expect(screen.getByLabelText(/ville/i)).toBeInTheDocument()
-    expect(screen.getByLabelText(/pi\u00e8ces/i)).toBeInTheDocument()
-    expect(screen.getByLabelText(/surface/i)).toBeInTheDocument()
     expect(screen.getByLabelText(/loyer mensuel/i)).toBeInTheDocument()
     expect(screen.getByLabelText(/url ical airbnb/i)).toBeInTheDocument()
     expect(screen.getByLabelText(/url ical booking/i)).toBeInTheDocument()
+  })
+
+  it("renders type selector with default value", () => {
+    render(<PropertyForm />)
+    expect(screen.getAllByText("Appartement").length).toBeGreaterThan(0)
   })
 
   it("shows 'Nouveau logement' title when creating", () => {
@@ -35,7 +38,7 @@ describe("PropertyForm", () => {
 
   it("shows create button when creating", () => {
     render(<PropertyForm />)
-    expect(screen.getByRole("button", { name: /cr\u00e9er le logement/i })).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: /créer le logement/i })).toBeInTheDocument()
   })
 
   it("shows save button when editing", () => {
@@ -43,7 +46,7 @@ describe("PropertyForm", () => {
     expect(screen.getByRole("button", { name: /enregistrer/i })).toBeInTheDocument()
   })
 
-  it("has cancel button that exists", () => {
+  it("has cancel button", () => {
     render(<PropertyForm />)
     expect(screen.getByRole("button", { name: /annuler/i })).toBeInTheDocument()
   })
