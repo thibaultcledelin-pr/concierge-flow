@@ -98,6 +98,9 @@ export async function GET() {
   const avgRevenuePerNight = totalNights > 0
     ? Math.round((totalProfit / totalNights) * 10) / 10
     : 0
+  const revPAR = totalDaysAvailable > 0
+    ? Math.round((totalRevenue / totalDaysAvailable) * 10) / 10
+    : 0
 
   // Monthly data for charts
   const monthlyRevenue: Record<string, number> = {}
@@ -184,6 +187,7 @@ export async function GET() {
       totalMargin,
       occupancyRate,
       avgRevenuePerNight,
+      revPAR,
       propertyCount: properties.length,
     },
     profitability: profitability.sort((a: ProfitabilityEntry, b: ProfitabilityEntry) => b.margin - a.margin),
