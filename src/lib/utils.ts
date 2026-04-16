@@ -39,3 +39,8 @@ export function calculateOccupancyRate(bookedNights: number, totalDaysInMonth: n
   if (totalDaysInMonth === 0) return 0
   return Math.min(100, (bookedNights / totalDaysInMonth) * 100)
 }
+
+export function calculateRevPAR(totalRevenue: number, availableNights: number): number {
+  if (availableNights === 0) return 0
+  return totalRevenue / availableNights
+}
