@@ -81,11 +81,12 @@ export function RevenueChart({ data }: RevenueChartProps) {
                 borderRadius: "8px",
                 fontSize: "12px",
               }}
-              formatter={(value: number, name: string) => [
-                `${value.toFixed(0)}€`,
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              formatter={(value: any, name: any) => [
+                `${Number(value).toFixed(0)}€`,
                 name === "revenue" ? "Revenus" : name === "expenses" ? "Dépenses" : "Profit",
               ]}
-              labelFormatter={formatMonth}
+              labelFormatter={(label: any) => formatMonth(String(label))}
             />
             <Area
               type="monotone"

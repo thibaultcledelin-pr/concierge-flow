@@ -28,10 +28,11 @@ export async function GET() {
   let totalDaysAvailable = 0
   const platformRevenue: Record<string, number> = {}
 
-  const profitability = properties.map((property) => {
-    const revenue = property.bookings.reduce((sum, b) => sum + b.totalAmount, 0)
-    const nights = property.bookings.reduce((sum, b) => sum + b.nights, 0)
-    const expenses = property.expenses.reduce((sum, e) => sum + e.amount, 0)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const profitability = properties.map((property: any) => {
+    const revenue = property.bookings.reduce((sum: number, b: any) => sum + b.totalAmount, 0)
+    const nights = property.bookings.reduce((sum: number, b: any) => sum + b.nights, 0)
+    const expenses = property.expenses.reduce((sum: number, e: any) => sum + e.amount, 0)
     const profit = revenue - expenses
     const margin = revenue > 0 ? (profit / revenue) * 100 : 0
 
@@ -58,7 +59,7 @@ export async function GET() {
     }
   })
 
-  const globalExpenseTotal = globalExpenses.reduce((sum, e) => sum + e.amount, 0)
+  const globalExpenseTotal = globalExpenses.reduce((sum: number, e: any) => sum + e.amount, 0)
   totalExpenses += globalExpenseTotal
 
   const totalProfit = totalRevenue - totalExpenses
@@ -109,7 +110,7 @@ export async function GET() {
       occupancyRate,
       propertyCount: properties.length,
     },
-    profitability: profitability.sort((a, b) => b.margin - a.margin),
+    profitability: profitability.sort((a: any, b: any) => b.margin - a.margin),
     chartData,
     platformData,
   })

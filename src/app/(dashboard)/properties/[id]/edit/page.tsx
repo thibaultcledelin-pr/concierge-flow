@@ -7,7 +7,7 @@ import { PropertyForm } from "@/components/properties/property-form"
 export default function EditPropertyPage() {
   const params = useParams()
   const router = useRouter()
-  const [defaultValues, setDefaultValues] = useState(null)
+  const [defaultValues, setDefaultValues] = useState<Record<string, unknown> | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {

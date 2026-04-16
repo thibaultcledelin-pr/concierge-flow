@@ -26,8 +26,8 @@ export function parseIcal(icalData: string): ParsedBooking[] {
 
     if (!dtstart || !dtend || !uid) continue
 
-    const checkIn = dtstart.toJSDate()
-    const checkOut = dtend.toJSDate()
+    const checkIn = (dtstart as any).toJSDate()
+    const checkOut = (dtend as any).toJSDate()
     const nights = calculateNights(checkIn, checkOut)
 
     if (nights <= 0) continue
