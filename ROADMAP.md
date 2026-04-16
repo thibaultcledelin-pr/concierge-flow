@@ -5,7 +5,7 @@
 
 ## Statut actuel
 📍 **Dernière session** : 2026-04-16
-🔧 **Étape en cours** : 1.0 — Setup projet
+🔧 **Étape en cours** : 1.2 — Layout app
 
 ---
 
@@ -24,11 +24,11 @@
 - [x] Premier commit
 
 ### 1.1 Auth
-- [ ] Page /login
-- [ ] Page /register
-- [ ] Route /callback
-- [ ] Layout auth (centré, sans sidebar)
-- [ ] Tests auth ✅/❌
+- [x] Page /login
+- [x] Page /register
+- [x] Route /callback
+- [x] Layout auth (centré, sans sidebar)
+- [x] Tests auth ✅ 13/13
 
 ### 1.2 Layout app
 - [ ] Sidebar
@@ -107,6 +107,7 @@
 |------|----------|----------|
 | 2026-04-16 | shadcn registry blocked (auth required for Nova preset) | Created components manually with shadcn-compatible code |
 | 2026-04-16 | Prisma 7 no longer supports url/directUrl in schema | Moved to prisma.config.ts, used prisma-client generator |
+| 2026-04-16 | git push CLI 403 permission denied | Used GitHub MCP API push_files instead |
 
 ## Décisions techniques
 
@@ -116,9 +117,11 @@
 | 2026-04-16 | iCal + CSV | iCal ne donne pas les montants |
 | 2026-04-16 | Airbnb + Booking au MVP | 80% du marché FR |
 | 2026-04-16 | Vitest | Plus rapide que Jest pour Next.js |
+| 2026-04-16 | Client-side auth forms | Supabase browser client pour login/register, server client pour callback |
 
 ## Notes de session
 
 ### Session 1 — 2026-04-16
-- Setup initial du projet
+- Setup initial du projet (1.0)
 - shadcn components created manually (registry auth issue)
+- Auth complète (1.1) : login, register, callback, layout, tests 13/13
