@@ -75,8 +75,16 @@ export default function ExpensesPage() {
 
   async function handleDelete(id: string) {
     if (!confirm("Supprimer cette dépense ?")) return
-    await fetch(`/api/expenses/${id}`, { method: "DELETE" })
-    setExpenses((prev) => prev.filter((e) => e.id !== id))
+    try {
+      const res = await fetch(`/api/expenses/${id}`, { method: "DELETE" })
+      if (!res.ok) {
+        alert("Impossible de supprimer cette dépense. Réessayez.")
+        return
+      }
+      setExpenses((prev) => prev.filter((e) => e.id !== id))
+    } catch {
+      alert("Erreur réseau. Vérifiez votre connexion.")
+    }
   }
 
   function handleEdit(expense: Expense) {
