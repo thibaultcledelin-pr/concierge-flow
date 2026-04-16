@@ -2,6 +2,31 @@ import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { createClient } from "@/lib/supabase/server"
 
+interface BookingRecord {
+  totalAmount: number
+  nights: number
+  platform: string
+  checkIn: Date
+}
+
+interface ExpenseRecord {
+  amount: number
+  date: Date
+}
+
+interface PropertyWithRelations {
+  id: string
+  name: string
+  city: string | null
+  bookings: BookingRecord[]
+  expenses: ExpenseRecord[]
+}
+
+interface ProfitabilityEntry {
+  margin: number
+  occupancy: number
+}
+
 export async function GET() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -28,11 +53,10 @@ export async function GET() {
   let totalDaysAvailable = 0
   const platformRevenue: Record<string, number> = {}
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const profitability = properties.map((property: any) => {
-    const revenue = property.bookings.reduce((sum: number, b: any) => sum + b.totalAmount, 0)
-    const nights = property.bookings.reduce((sum: number, b: any) => sum + b.nights, 0)
-    const expenses = property.expenses.reduce((sum: number, e: any) => sum + e.amount, 0)
+  const profitability = properties.map((property: PropertyWithRelations) => {
+    const revenue = property.bookings.reduce((sum: number, b: BookingRecord) => sum + b.totalAmount, 0)
+    const nights = property.bookings.reduce((sum: number, b: BookingRecord) => sum + b.nights, 0)
+    const expenses = property.expenses.reduce((sum: number, e: ExpenseRecord) => sum + e.amount, 0)
     const profit = revenue - expenses
     const margin = revenue > 0 ? (profit / revenue) * 100 : 0
 
@@ -61,7 +85,7 @@ export async function GET() {
     }
   })
 
-  const globalExpenseTotal = globalExpenses.reduce((sum: number, e: any) => sum + e.amount, 0)
+  const globalExpenseTotal = globalExpenses.reduce((sum: number, e: { amount: number }) => sum + e.amount, 0)
   totalExpenses += globalExpenseTotal
 
   const totalProfit = totalRevenue - totalExpenses
@@ -84,7 +108,7 @@ export async function GET() {
   const monthlyPropertyExpenses: Record<string, Record<string, number>> = {}
 
   for (const property of properties) {
-    for (const booking of (property as any).bookings) {
+    for (const booking of (property as PropertyWithRelations).bookings) {
       const month = new Date(booking.checkIn).toISOString().slice(0, 7)
       monthlyRevenue[month] = (monthlyRevenue[month] || 0) + booking.totalAmount
       monthlyNights[month] = (monthlyNights[month] || 0) + booking.nights
@@ -95,7 +119,7 @@ export async function GET() {
       if (!monthlyPropertyRevenue[month]) monthlyPropertyRevenue[month] = {}
       monthlyPropertyRevenue[month][property.name] = (monthlyPropertyRevenue[month][property.name] || 0) + booking.totalAmount
     }
-    for (const expense of (property as any).expenses) {
+    for (const expense of (property as PropertyWithRelations).expenses) {
       const month = new Date(expense.date).toISOString().slice(0, 7)
       monthlyExpenses[month] = (monthlyExpenses[month] || 0) + expense.amount
 
@@ -145,7 +169,7 @@ export async function GET() {
   const occupancyByProperty = profitability.map((p) => ({
     name: p.propertyName,
     occupancy: p.occupancy,
-  })).sort((a: any, b: any) => b.occupancy - a.occupancy)
+  })).sort((a: ProfitabilityEntry, b: ProfitabilityEntry) => b.occupancy - a.occupancy)
 
   const platformData = Object.entries(platformRevenue).map(([name, value]) => ({
     name,
@@ -162,7 +186,7 @@ export async function GET() {
       avgRevenuePerNight,
       propertyCount: properties.length,
     },
-    profitability: profitability.sort((a: any, b: any) => b.margin - a.margin),
+    profitability: profitability.sort((a: ProfitabilityEntry, b: ProfitabilityEntry) => b.margin - a.margin),
     chartData,
     occupancyData,
     revenuePerNightData,

@@ -80,9 +80,8 @@ export function OccupancyChart({ data }: OccupancyChartProps) {
                 padding: "12px",
                 fontSize: "12px",
               }}
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              formatter={(value: any) => [`${Number(value).toFixed(1)}%`, "Occupation"]}
-              labelFormatter={(label: any) => formatMonth(String(label))}
+              formatter={(value: number | string) => [`${Number(value).toFixed(1)}%`, "Occupation"]}
+              labelFormatter={(label: number | string) => formatMonth(String(label))}
             />
             <Area
               type="monotone"

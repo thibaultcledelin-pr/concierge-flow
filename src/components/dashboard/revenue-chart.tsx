@@ -86,20 +86,18 @@ export function RevenueChart({ data }: RevenueChartProps) {
                 padding: "12px",
                 fontSize: "12px",
               }}
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              formatter={(value: any, name: any) => {
+              formatter={(value: number | string, name: number | string) => {
                 const labels: Record<string, string> = { revenue: "Revenus", expenses: "Dépenses", profit: "Marge nette" }
-                return [`${Number(value).toFixed(0)}€`, labels[name] || name]
+                return [`${Number(value).toFixed(0)}€`, labels[String(name)] || String(name)]
               }}
-              labelFormatter={(label: any) => formatMonth(String(label))}
+              labelFormatter={(label: number | string) => formatMonth(String(label))}
             />
             <Legend
               iconType="circle"
               iconSize={8}
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              formatter={(value: any) => {
+              formatter={(value: number | string) => {
                 const labels: Record<string, string> = { revenue: "Revenus", expenses: "Dépenses", profit: "Marge nette" }
-                return labels[value] || value
+                return labels[String(value)] || String(value)
               }}
             />
             <Area
