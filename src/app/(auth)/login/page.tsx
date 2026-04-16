@@ -33,6 +33,8 @@ export default function LoginPage() {
       return
     }
 
+    // Keep loading=true during navigation to keep the button disabled
+    // and show a consistent state until the redirect happens
     router.push("/dashboard")
     router.refresh()
   }
