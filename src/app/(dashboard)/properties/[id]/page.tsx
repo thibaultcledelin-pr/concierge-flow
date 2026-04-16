@@ -44,9 +44,14 @@ export default function PropertyDetailPage() {
         if (!res.ok) throw new Error("Not found")
         return res.json()
       })
-      .then(setProperty)
-      .catch(() => router.push("/properties"))
-      .finally(() => setLoading(false))
+      .then((data) => {
+        setProperty(data)
+        setLoading(false)
+      })
+      .catch(() => {
+        // Keep loading=true while redirecting to avoid flashing null content
+        router.push("/properties")
+      })
   }, [params.id, router])
 
   if (loading || !property) {
@@ -87,13 +92,13 @@ export default function PropertyDetailPage() {
             </Badge>
           </div>
           <div className="flex justify-between">
-            <span className="text-sm text-muted-foreground">Pi\u00e8ces</span>
+            <span className="text-sm text-muted-foreground">Pièces</span>
             <span className="text-sm">{property.rooms}</span>
           </div>
           {property.surface && (
             <div className="flex justify-between">
               <span className="text-sm text-muted-foreground">Surface</span>
-              <span className="text-sm">{property.surface} m\u00b2</span>
+              <span className="text-sm">{property.surface} m²</span>
             </div>
           )}
           {property.monthlyRent && (
@@ -105,13 +110,13 @@ export default function PropertyDetailPage() {
           {property.icalUrl && (
             <div className="flex justify-between">
               <span className="text-sm text-muted-foreground">iCal Airbnb</span>
-              <span className="text-sm text-green-400">Configur\u00e9</span>
+              <span className="text-sm text-green-400">Configuré</span>
             </div>
           )}
           {property.icalUrlBooking && (
             <div className="flex justify-between">
               <span className="text-sm text-muted-foreground">iCal Booking</span>
-              <span className="text-sm text-green-400">Configur\u00e9</span>
+              <span className="text-sm text-green-400">Configuré</span>
             </div>
           )}
         </CardContent>
