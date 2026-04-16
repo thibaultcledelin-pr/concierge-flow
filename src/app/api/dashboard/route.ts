@@ -63,7 +63,9 @@ export async function GET() {
     totalRevenue += revenue
     totalExpenses += expenses
     totalNights += nights
-    totalDaysAvailable += 30
+    const now = new Date()
+    const daysThisMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate()
+    totalDaysAvailable += daysThisMonth
 
     for (const booking of property.bookings) {
       const platform = booking.platform
@@ -80,7 +82,7 @@ export async function GET() {
       margin: Math.round(margin * 10) / 10,
       nights,
       bookings: property.bookings.length,
-      occupancy: totalDaysAvailable > 0 ? Math.round((nights / 30) * 1000) / 10 : 0,
+      occupancy: daysThisMonth > 0 ? Math.round((nights / daysThisMonth) * 1000) / 10 : 0,
       revenuePerNight: nights > 0 ? Math.round(((revenue - expenses) / nights) * 10) / 10 : 0,
     }
   })
@@ -145,7 +147,8 @@ export async function GET() {
   }))
 
   // Occupancy timeline
-  const occupancyData = allMonths.map((month) => {
+  const monthRegex = /^\d{4}-\d{2}$/
+  const occupancyData = allMonths.filter((m) => monthRegex.test(m)).map((month) => {
     const daysInMonth = new Date(parseInt(month.slice(0, 4)), parseInt(month.slice(5, 7)), 0).getDate()
     const nights = monthlyNights[month] || 0
     const totalAvailable = daysInMonth * properties.length
