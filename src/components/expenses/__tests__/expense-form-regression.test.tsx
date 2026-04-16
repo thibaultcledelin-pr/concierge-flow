@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from "vitest"
 import { render, screen } from "@testing-library/react"
+import { readFileSync } from "fs"
 import { ExpenseForm } from "../expense-form"
 
 vi.mock("@/hooks/use-toast", () => ({
@@ -9,7 +10,6 @@ vi.mock("@/hooks/use-toast", () => ({
 describe("expense-form non-regression", () => {
   // Non-regression: PR #11, bug #12 — optional chaining, no non-null assertion
   it("source code uses optional chaining for defaultValues.id", () => {
-    const { readFileSync } = require("fs")
     const source = readFileSync("src/components/expenses/expense-form.tsx", "utf-8")
     expect(source).not.toContain("defaultValues!.id")
     expect(source).toContain("defaultValues?.id")
@@ -25,6 +25,6 @@ describe("expense-form non-regression", () => {
         onSuccess={vi.fn()}
       />
     )
-    expect(screen.getByText("Nouvelle dépense")).toBeInTheDocument()
+    expect(screen.getByText("Nouvelle d\u00e9pense")).toBeInTheDocument()
   })
 })
