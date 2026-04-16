@@ -5,7 +5,7 @@
 
 ## Statut actuel
 📍 **Dernière session** : 2026-04-16
-🔧 **Étape en cours** : 2.1 — Import iCal
+🔧 **Étape en cours** : 2.2 — Import CSV
 
 ---
 
@@ -45,14 +45,14 @@
 - [x] PropertyForm (react-hook-form + Zod)
 - [x] Pages (liste cards, new, detail, edit)
 - [x] Validation Zod côté serveur
-- [x] Tests properties ✅ 11/11 (total 34/34)
+- [x] Tests properties ✅ 11/11
 
 ### 2.1 Import iCal
-- [ ] API sync-ical
-- [ ] Parser ical.js
-- [ ] Dédoublonnage externalId
-- [ ] Composant IcalImport
-- [ ] Tests iCal ✅/❌
+- [x] API sync-ical (POST /api/properties/[id]/sync-ical)
+- [x] Parser ical.js (parseIcal + detectPlatform)
+- [x] Dédoublonnage externalId
+- [x] Composant IcalImport
+- [x] Tests iCal ✅ 17/17 (total 52/52)
 
 ### 2.2 Import CSV
 - [ ] Parser CSV Airbnb (Papaparse)
@@ -109,6 +109,7 @@
 | 2026-04-16 | shadcn registry blocked | Created components manually |
 | 2026-04-16 | Prisma 7 url/directUrl removed from schema | Moved to prisma.config.ts |
 | 2026-04-16 | git push CLI 403 | Used GitHub MCP API push_files |
+| 2026-04-16 | Select renders "Appartement" twice in DOM | Used getAllByText in test |
 
 ## Décisions techniques
 
@@ -118,11 +119,12 @@
 | 2026-04-16 | iCal + CSV | iCal ne donne pas les montants |
 | 2026-04-16 | Airbnb + Booking au MVP | 80% du marché FR |
 | 2026-04-16 | Vitest | Plus rapide que Jest pour Next.js |
-| 2026-04-16 | react-hook-form + zodResolver | Validation côté client cohérente avec côté serveur |
+| 2026-04-16 | totalAmount=0 pour iCal bookings | iCal ne fournit pas les montants, sera enrichi par CSV |
 
 ## Notes de session
 
 ### Session 1 — 2026-04-16
 - Setup (1.0), Auth (1.1), Layout (1.2) — Semaine 1 terminée
-- CRUD logements (2.0) : API + form + 4 pages + tests 11/11
-- Total : 34 tests passent
+- CRUD logements (2.0) : API + form + 4 pages + tests
+- Import iCal (2.1) : parser ical.js, sync API, dédoublonnage, composant IcalImport
+- Total : 52 tests passent
