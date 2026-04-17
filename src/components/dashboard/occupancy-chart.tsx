@@ -59,14 +59,14 @@ export function OccupancyChart({ data }: OccupancyChartProps) {
             <XAxis
               dataKey="month"
               tickFormatter={formatMonth}
-              stroke="rgba(255,255,255,0.5)"
+              stroke="rgba(255,255,255,0.7)"
               fontSize={12}
               tickLine={false}
               axisLine={false}
             />
             <YAxis
               domain={[0, 100]}
-              stroke="rgba(255,255,255,0.5)"
+              stroke="rgba(255,255,255,0.7)"
               fontSize={12}
               tickLine={false}
               axisLine={false}
@@ -74,11 +74,11 @@ export function OccupancyChart({ data }: OccupancyChartProps) {
             />
             <Tooltip
               contentStyle={{
-                backgroundColor: "hsl(var(--card))",
-                border: "1px solid hsl(var(--border))",
+                backgroundColor: "rgba(15,15,15,0.95)",
+                border: "1px solid rgba(255,255,255,0.1)",
                 borderRadius: "10px",
                 padding: "12px",
-                fontSize: "13px", color: "hsl(var(--foreground))",
+                backgroundColor: "rgba(15,15,15,0.95)", color: "#e5e5e5", fontSize: "13px",
               }}
               formatter={(value: number | string) => [`${Number(value).toFixed(1)}%`, "Occupation"]}
               labelFormatter={(label: number | string) => formatMonth(String(label))}
