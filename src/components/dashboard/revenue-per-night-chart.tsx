@@ -77,12 +77,14 @@ export function RevenuePerNightChart({ data, propertyNames }: RevenuePerNightCha
               tickFormatter={(v: number) => `${v}€`}
             />
             <Tooltip
+              cursor={{ stroke: "rgba(255,255,255,0.1)", strokeWidth: 1 }}
               contentStyle={{
                 backgroundColor: "rgba(15,15,15,0.95)",
                 border: "1px solid rgba(255,255,255,0.1)",
                 borderRadius: "10px",
                 padding: "12px",
-                backgroundColor: "rgba(15,15,15,0.95)", color: "#e5e5e5", fontSize: "13px",
+                color: "#e5e5e5",
+                fontSize: "13px",
               }}
               formatter={(value: number | string, name: number | string) => [`${Number(value).toFixed(0)}€/nuit`, String(name)]}
               labelFormatter={(label: number | string) => formatMonth(String(label))}
