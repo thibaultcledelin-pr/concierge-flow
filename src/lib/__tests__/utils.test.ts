@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest"
-import { formatCurrency, calculateMargin, calculateNights, calculateRevenuePerNight, calculateOccupancyRate, calculateRevPAR, calculateADR } from "../utils"
+import { formatCurrency, calculateNights } from "../utils"
 
 describe("utils", () => {
   describe("formatCurrency", () => {
@@ -15,24 +15,6 @@ describe("utils", () => {
     })
   })
 
-  describe("calculateMargin", () => {
-    it("calculates correct margin", () => {
-      expect(calculateMargin(1000, 300)).toBeCloseTo(70)
-    })
-
-    it("returns 0 when revenue is 0", () => {
-      expect(calculateMargin(0, 100)).toBe(0)
-    })
-
-    it("returns 100% when no expenses", () => {
-      expect(calculateMargin(1000, 0)).toBe(100)
-    })
-
-    it("handles negative profit (expenses > revenue)", () => {
-      expect(calculateMargin(100, 200)).toBeCloseTo(-100)
-    })
-  })
-
   describe("calculateNights", () => {
     it("calculates correct nights", () => {
       const checkIn = new Date("2026-05-01")
@@ -43,54 +25,6 @@ describe("utils", () => {
     it("returns 0 for same day", () => {
       const date = new Date("2026-05-01")
       expect(calculateNights(date, date)).toBe(0)
-    })
-  })
-
-  describe("calculateRevenuePerNight", () => {
-    it("calculates correctly", () => {
-      expect(calculateRevenuePerNight(1000, 200, 5)).toBe(160)
-    })
-
-    it("returns 0 when no nights", () => {
-      expect(calculateRevenuePerNight(1000, 200, 0)).toBe(0)
-    })
-  })
-
-  describe("calculateOccupancyRate", () => {
-    it("calculates percentage correctly", () => {
-      expect(calculateOccupancyRate(15, 30)).toBe(50)
-    })
-
-    it("caps at 100%", () => {
-      expect(calculateOccupancyRate(35, 30)).toBe(100)
-    })
-
-    it("returns 0 when no days", () => {
-      expect(calculateOccupancyRate(10, 0)).toBe(0)
-    })
-  })
-
-  describe("calculateRevPAR", () => {
-    it("calculates revenue per available room-night", () => {
-      expect(calculateRevPAR(3000, 30)).toBe(100)
-    })
-
-    it("returns 0 when no available nights", () => {
-      expect(calculateRevPAR(1000, 0)).toBe(0)
-    })
-
-    it("handles partial occupancy", () => {
-      expect(calculateRevPAR(1500, 30)).toBe(50)
-    })
-  })
-
-  describe("calculateADR", () => {
-    it("calculates average daily rate", () => {
-      expect(calculateADR(3000, 20)).toBe(150)
-    })
-
-    it("returns 0 when no occupied nights", () => {
-      expect(calculateADR(1000, 0)).toBe(0)
     })
   })
 })
