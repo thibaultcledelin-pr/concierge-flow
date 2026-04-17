@@ -20,7 +20,7 @@ describe("Topbar", () => {
 
   it("renders user avatar with initials", () => {
     render(<Topbar onMenuClick={vi.fn()} />)
-    expect(screen.getByText("CF")).toBeInTheDocument()
+    expect(screen.getAllByText("MC").length).toBeGreaterThan(0)
   })
 
   it("renders period selector", () => {
