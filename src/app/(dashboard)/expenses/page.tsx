@@ -92,8 +92,8 @@ export default function ExpensesPage() {
     setFormOpen(true)
   }
 
-  const totalExpenses = expenses.reduce((sum, e) => sum + e.amount, 0)
-  const recurringCount = expenses.filter((e) => e.isRecurring).length
+  const totalExpenses = expenses.reduce((sum, expense) => sum + expense.amount, 0)
+  const recurringCount = expenses.filter((expense) => expense.isRecurring).length
 
   return (
     <div>
