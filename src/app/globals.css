@@ -125,7 +125,16 @@
   }
 
   .recharts-wrapper:focus,
-  .recharts-surface:focus {
-    outline: none;
+  .recharts-wrapper:focus-visible,
+  .recharts-surface:focus,
+  .recharts-surface:focus-visible {
+    outline: none !important;
+    box-shadow: none !important;
+  }
+
+  /* Masque le rectangle gris au survol des barres */
+  .recharts-tooltip-cursor {
+    fill: transparent !important;
+    stroke: transparent !important;
   }
 }
