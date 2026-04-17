@@ -11,6 +11,7 @@ import {
   Legend,
 } from "recharts"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { formatMonth, TOOLTIP_STYLE } from "@/lib/chart-utils"
 
 interface ChartDataPoint {
   month: string
@@ -21,13 +22,6 @@ interface ChartDataPoint {
 
 interface RevenueChartProps {
   data: ChartDataPoint[]
-}
-
-const MONTHS_FR = ["Jan", "Fév", "Mar", "Avr", "Mai", "Jun", "Jul", "Aoû", "Sep", "Oct", "Nov", "Déc"]
-
-function formatMonth(month: string) {
-  const [year, m] = month.split("-")
-  return `${MONTHS_FR[parseInt(m) - 1]} ${year.slice(2)}`
 }
 
 export function RevenueChart({ data }: RevenueChartProps) {
@@ -80,14 +74,7 @@ export function RevenueChart({ data }: RevenueChartProps) {
             />
             <Tooltip
               cursor={{ stroke: "rgba(255,255,255,0.1)", strokeWidth: 1 }}
-              contentStyle={{
-                backgroundColor: "rgba(15,15,15,0.95)",
-                border: "1px solid rgba(255,255,255,0.1)",
-                borderRadius: "10px",
-                padding: "12px",
-                color: "#e5e5e5",
-                fontSize: "13px",
-              }}
+              contentStyle={TOOLTIP_STYLE}
               formatter={(value: number | string, name: number | string) => {
                 const labels: Record<string, string> = { revenue: "Revenus", expenses: "Dépenses", profit: "Marge nette" }
                 return [`${Number(value).toFixed(0)}€`, labels[String(name)] || String(name)]
