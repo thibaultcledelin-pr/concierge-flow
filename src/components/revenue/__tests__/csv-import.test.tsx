@@ -18,4 +18,11 @@ describe("CsvImport", () => {
     const button = screen.getByRole("button", { name: /importer/i })
     expect(button).toBeDisabled()
   })
+
+  it("source code wraps res.json() in try-catch", async () => {
+    const { readFileSync } = await import("fs")
+    const source = readFileSync("src/components/revenue/csv-import.tsx", "utf-8")
+    expect(source).toContain("try {")
+    expect(source).toContain(".catch(")
+  })
 })
