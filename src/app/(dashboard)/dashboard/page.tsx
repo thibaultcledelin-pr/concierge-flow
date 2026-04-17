@@ -19,6 +19,7 @@ interface DashboardData {
     occupancyRate: number
     avgRevenuePerNight: number
     revPAR: number
+    adr: number
     propertyCount: number
   }
   profitability: {
@@ -106,6 +107,8 @@ export default function DashboardPage() {
         avgRevenuePerNight={data.stats.avgRevenuePerNight}
         totalMargin={data.stats.totalMargin}
         revPAR={data.stats.revPAR}
+        adr={data.stats.adr}
+        totalRevenue={data.stats.totalRevenue}
       />
 
       {/* Graphe 1 — Taux d'occupation (pleine largeur) */}
