@@ -1,6 +1,8 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import Link from "next/link"
+import { Plus } from "lucide-react"
 import { StatsCards } from "@/components/dashboard/stats-cards"
 import { OccupancyChart } from "@/components/dashboard/occupancy-chart"
 import { RevenuePerNightChart } from "@/components/dashboard/revenue-per-night-chart"
@@ -124,19 +126,28 @@ export default function DashboardPage() {
             Vue d&apos;ensemble — {data.stats.propertyCount} logement{data.stats.propertyCount !== 1 ? "s" : ""}
           </p>
         </div>
-        {data.allProperties.length > 1 && (
-          <Select value={selectedProperty} onValueChange={handlePropertyChange}>
-            <SelectTrigger className="w-[220px]">
-              <SelectValue placeholder="Tous les logements" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Tous les logements</SelectItem>
-              {data.allProperties.map((p) => (
-                <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        )}
+        <div className="flex items-center gap-3">
+          {data.allProperties.length > 1 && (
+            <Select value={selectedProperty} onValueChange={handlePropertyChange}>
+              <SelectTrigger className="w-[220px]">
+                <SelectValue placeholder="Tous les logements" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Tous les logements</SelectItem>
+                {data.allProperties.map((p) => (
+                  <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+          <Link
+            href="/properties/new"
+            className="inline-flex items-center gap-2 rounded-md bg-violet-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-violet-500"
+          >
+            <Plus className="h-4 w-4" />
+            <span className="hidden sm:inline">Ajouter un logement</span>
+          </Link>
+        </div>
       </div>
 
       <StatsCards
