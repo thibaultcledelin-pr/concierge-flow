@@ -55,19 +55,19 @@ export function OccupancyChart({ data }: OccupancyChartProps) {
                 <stop offset="100%" stopColor="#7c3aed" stopOpacity={0} />
               </linearGradient>
             </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" strokeOpacity={0.04} />
+            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" strokeOpacity={0.15} />
             <XAxis
               dataKey="month"
               tickFormatter={formatMonth}
-              stroke="hsl(var(--muted-foreground))"
-              fontSize={11}
+              stroke="rgba(255,255,255,0.5)"
+              fontSize={12}
               tickLine={false}
               axisLine={false}
             />
             <YAxis
               domain={[0, 100]}
-              stroke="hsl(var(--muted-foreground))"
-              fontSize={11}
+              stroke="rgba(255,255,255,0.5)"
+              fontSize={12}
               tickLine={false}
               axisLine={false}
               tickFormatter={(v: number) => `${v}%`}
@@ -78,7 +78,7 @@ export function OccupancyChart({ data }: OccupancyChartProps) {
                 border: "1px solid hsl(var(--border))",
                 borderRadius: "10px",
                 padding: "12px",
-                fontSize: "12px",
+                fontSize: "13px", color: "hsl(var(--foreground))",
               }}
               formatter={(value: number | string) => [`${Number(value).toFixed(1)}%`, "Occupation"]}
               labelFormatter={(label: number | string) => formatMonth(String(label))}
