@@ -79,12 +79,14 @@ export function RevenueChart({ data }: RevenueChartProps) {
               tickFormatter={(v: number) => v >= 1000 ? `${(v / 1000).toFixed(0)}k€` : `${v}€`}
             />
             <Tooltip
+              cursor={{ stroke: "rgba(255,255,255,0.1)", strokeWidth: 1 }}
               contentStyle={{
                 backgroundColor: "rgba(15,15,15,0.95)",
                 border: "1px solid rgba(255,255,255,0.1)",
                 borderRadius: "10px",
                 padding: "12px",
-                backgroundColor: "rgba(15,15,15,0.95)", color: "#e5e5e5", fontSize: "13px",
+                color: "#e5e5e5",
+                fontSize: "13px",
               }}
               formatter={(value: number | string, name: number | string) => {
                 const labels: Record<string, string> = { revenue: "Revenus", expenses: "Dépenses", profit: "Marge nette" }

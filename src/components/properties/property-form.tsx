@@ -61,6 +61,7 @@ export function PropertyForm({ defaultValues, propertyId }: PropertyFormProps) {
     },
   })
 
+  // eslint-disable-next-line react-hooks/incompatible-library
   const selectedType = watch("type")
 
   async function onSubmit(data: PropertyFormData) {
