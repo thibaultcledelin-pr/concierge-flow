@@ -10,6 +10,7 @@ import { OccupancyBarChart } from "@/components/dashboard/occupancy-bar-chart"
 import { RevenueChart } from "@/components/dashboard/revenue-chart"
 import { ProfitabilityTable } from "@/components/dashboard/profitability-table"
 import { SyncButton } from "@/components/dashboard/sync-button"
+import { OnboardingWizard } from "@/components/onboarding/onboarding-wizard"
 import { PageLoading } from "@/components/ui/page-loading"
 import { PageError } from "@/components/ui/page-error"
 import {
@@ -112,6 +113,11 @@ export default function DashboardPage() {
         </div>
       </div>
     )
+  }
+
+  // Onboarding si aucun logement
+  if (data.allProperties.length === 0) {
+    return <OnboardingWizard />
   }
 
   const selectedPropertyName = selectedProperty !== "all"
