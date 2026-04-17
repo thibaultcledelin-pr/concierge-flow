@@ -27,7 +27,7 @@ interface ProfitabilityEntry {
   occupancy: number
 }
 
-export async function GET() {
+export async function GET(request: Request) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
@@ -35,17 +35,32 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 
-  const properties = await prisma.property.findMany({
+  const { searchParams } = new URL(request.url)
+  const propertyId = searchParams.get("propertyId")
+
+  const allProperties = await prisma.property.findMany({
     where: { userId: user.id },
+    select: { id: true, name: true },
+    orderBy: { name: "asc" },
+  })
+
+  const propertyFilter = propertyId
+    ? { userId: user.id, id: propertyId }
+    : { userId: user.id }
+
+  const properties = await prisma.property.findMany({
+    where: propertyFilter,
     include: {
       bookings: true,
       expenses: true,
     },
   })
 
-  const globalExpenses = await prisma.expense.findMany({
-    where: { userId: user.id, propertyId: null },
-  })
+  const globalExpenses = propertyId
+    ? []
+    : await prisma.expense.findMany({
+        where: { userId: user.id, propertyId: null },
+      })
 
   let totalRevenue = 0
   let totalExpenses = 0
@@ -162,7 +177,7 @@ export async function GET() {
   })
 
   // Revenue per night per property
-  const propertyNames = properties.map((p) => p.name)
+  const propertyNames = properties.map((p: PropertyWithRelations) => p.name)
   const revenuePerNightData = allMonths.slice(-6).map((month) => {
     const point: Record<string, string | number> = { month }
     for (const name of propertyNames) {
@@ -175,7 +190,7 @@ export async function GET() {
   })
 
   // Occupancy per property (bar chart)
-  const occupancyByProperty = profitability.map((p) => ({
+  const occupancyByProperty = profitability.map((p: { propertyName: string; occupancy: number }) => ({
     name: p.propertyName,
     occupancy: p.occupancy,
   })).sort((a: ProfitabilityEntry, b: ProfitabilityEntry) => b.occupancy - a.occupancy)
@@ -204,5 +219,6 @@ export async function GET() {
     propertyNames,
     occupancyByProperty,
     platformData,
+    allProperties,
   })
 }
