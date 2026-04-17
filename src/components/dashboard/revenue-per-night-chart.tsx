@@ -60,18 +60,18 @@ export function RevenuePerNightChart({ data, propertyNames }: RevenuePerNightCha
                 </linearGradient>
               ))}
             </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" strokeOpacity={0.04} />
+            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" strokeOpacity={0.15} />
             <XAxis
               dataKey="month"
               tickFormatter={formatMonth}
-              stroke="hsl(var(--muted-foreground))"
-              fontSize={11}
+              stroke="rgba(255,255,255,0.5)"
+              fontSize={12}
               tickLine={false}
               axisLine={false}
             />
             <YAxis
-              stroke="hsl(var(--muted-foreground))"
-              fontSize={11}
+              stroke="rgba(255,255,255,0.5)"
+              fontSize={12}
               tickLine={false}
               axisLine={false}
               tickFormatter={(v: number) => `${v}€`}
@@ -82,7 +82,7 @@ export function RevenuePerNightChart({ data, propertyNames }: RevenuePerNightCha
                 border: "1px solid hsl(var(--border))",
                 borderRadius: "10px",
                 padding: "12px",
-                fontSize: "12px",
+                fontSize: "13px", color: "hsl(var(--foreground))",
               }}
               formatter={(value: number | string, name: number | string) => [`${Number(value).toFixed(0)}€/nuit`, String(name)]}
               labelFormatter={(label: number | string) => formatMonth(String(label))}
@@ -95,7 +95,7 @@ export function RevenuePerNightChart({ data, propertyNames }: RevenuePerNightCha
                 dataKey={name}
                 stroke={COLORS[i % COLORS.length]}
                 fill={`url(#rpnGrad${i})`}
-                strokeWidth={2}
+                strokeWidth={2.5}
                 dot={false}
                 activeDot={{ r: 5, fill: COLORS[i % COLORS.length], strokeWidth: 2, stroke: "hsl(var(--card))" }}
                 animationDuration={1400}
