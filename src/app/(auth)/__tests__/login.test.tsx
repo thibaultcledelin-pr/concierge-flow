@@ -52,6 +52,17 @@ describe("LoginPage", () => {
     })
   })
 
+  it("does not call setLoading(false) after router.push", async () => {
+    const { readFileSync } = await import("fs")
+    const source = readFileSync("src/app/(auth)/login/page.tsx", "utf-8")
+    const afterPush = source.slice(source.indexOf("router.push"))
+    const nextSetLoading = afterPush.indexOf("setLoading(false)")
+    const functionEnd = afterPush.indexOf("}")
+    if (nextSetLoading !== -1) {
+      expect(nextSetLoading).toBeGreaterThan(functionEnd)
+    }
+  })
+
   it("redirects to dashboard on successful login", async () => {
     mockSignIn.mockResolvedValue({ error: null })
 
