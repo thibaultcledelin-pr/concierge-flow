@@ -49,12 +49,12 @@ export function OccupancyBarChart({ data }: OccupancyBarChartProps) {
       <CardContent>
         <ResponsiveContainer width="100%" height={Math.max(200, data.length * 48)}>
           <BarChart data={data} layout="vertical" barSize={16}>
-            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" strokeOpacity={0.04} horizontal={false} />
+            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" strokeOpacity={0.15} horizontal={false} />
             <XAxis
               type="number"
               domain={[0, 100]}
-              stroke="hsl(var(--muted-foreground))"
-              fontSize={11}
+              stroke="rgba(255,255,255,0.5)"
+              fontSize={12}
               tickLine={false}
               axisLine={false}
               tickFormatter={(v: number) => `${v}%`}
@@ -62,8 +62,8 @@ export function OccupancyBarChart({ data }: OccupancyBarChartProps) {
             <YAxis
               type="category"
               dataKey="name"
-              stroke="hsl(var(--muted-foreground))"
-              fontSize={11}
+              stroke="rgba(255,255,255,0.5)"
+              fontSize={12}
               tickLine={false}
               axisLine={false}
               width={120}
@@ -74,7 +74,7 @@ export function OccupancyBarChart({ data }: OccupancyBarChartProps) {
                 border: "1px solid hsl(var(--border))",
                 borderRadius: "10px",
                 padding: "12px",
-                fontSize: "12px",
+                fontSize: "13px", color: "hsl(var(--foreground))",
               }}
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
               formatter={(value: any) => [`${Number(value).toFixed(1)}%`, "Occupation"]}
