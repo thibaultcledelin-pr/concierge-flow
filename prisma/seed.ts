@@ -5,213 +5,202 @@ import { PrismaPg } from "@prisma/adapter-pg"
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL! })
 const prisma = new PrismaClient({ adapter })
 
+const TARGET_USER_ID = "d2b1976e-93da-48f9-9b53-3b20fd2c3161"
+
+function date(y: number, m: number, d: number) {
+  return new Date(y, m - 1, d)
+}
 
 async function main() {
   console.log("🌱 Starting seed...")
-  console.log(`DATABASE_URL set: ${!!process.env.DATABASE_URL}`)
 
-  // Test connection
-  try {
-    await prisma.$connect()
-    console.log("✅ Database connection OK")
-  } catch (err) {
-    console.error("❌ Database connection failed:", err)
-    process.exit(1)
-  }
+  const userId = process.argv[2] || process.env.SEED_USER_ID || TARGET_USER_ID
+  console.log(`Target userId: ${userId}`)
 
-  // Get userId from args or env, or find existing user
-  const userId = process.argv[2] || process.env.SEED_USER_ID
-
-  let targetUserId: string
-
-  if (userId) {
-    // Use provided user ID (from Supabase Auth)
-    targetUserId = userId
-    console.log(`Using provided userId: ${targetUserId}`)
-
-    // Ensure user exists in our users table
-    const existingUser = await prisma.user.findUnique({ where: { id: targetUserId } })
-    if (!existingUser) {
-      const user = await prisma.user.create({
-        data: {
-          id: targetUserId,
-          email: "demo@conciergeflow.fr",
-          name: "Marie Conciergerie",
-          company: "MC Gestion",
-        },
-      })
-      console.log(`✅ Created user: ${user.email} (${user.id})`)
-    } else {
-      console.log(`✅ User already exists: ${existingUser.email} (${existingUser.id})`)
-    }
+  // Ensure user exists
+  const existing = await prisma.user.findUnique({ where: { id: userId } })
+  if (!existing) {
+    await prisma.user.create({
+      data: { id: userId, email: "demo@conciergeflow.fr", name: "Marie Conciergerie", company: "MC Gestion" },
+    })
+    console.log("✅ Created user")
   } else {
-    // Find first existing user in database
-    const existingUser = await prisma.user.findFirst()
-    if (existingUser) {
-      targetUserId = existingUser.id
-      console.log(`✅ Found existing user: ${existingUser.email} (${existingUser.id})`)
-    } else {
-      console.error("❌ No user found. Please either:")
-      console.error("   1. Register via the app first, then run: npm run seed")
-      console.error("   2. Pass your Supabase user ID: npx tsx prisma/seed.ts <your-user-id>")
-      console.error("   3. Set SEED_USER_ID env var")
-      process.exit(1)
-    }
+    console.log(`✅ User exists: ${existing.email}`)
   }
 
-  // Clean existing seed data for this user
-  console.log("\n🗑️  Cleaning existing data...")
-  const deletedBookings = await prisma.booking.deleteMany({
-    where: { property: { userId: targetUserId } },
-  })
-  console.log(`  Deleted ${deletedBookings.count} bookings`)
+  // Clean
+  console.log("\n🗑️  Cleaning...")
+  await prisma.booking.deleteMany({ where: { property: { userId } } })
+  await prisma.expense.deleteMany({ where: { userId } })
+  await prisma.property.deleteMany({ where: { userId } })
 
-  const deletedExpenses = await prisma.expense.deleteMany({
-    where: { userId: targetUserId },
-  })
-  console.log(`  Deleted ${deletedExpenses.count} expenses`)
-
-  const deletedProperties = await prisma.property.deleteMany({
-    where: { userId: targetUserId },
-  })
-  console.log(`  Deleted ${deletedProperties.count} properties`)
-
-  // Create 4 properties
-  console.log("\n🏠 Creating properties...")
-  const properties = []
-  const propertyData = [
-    { name: "Studio Marais", address: "18 rue des Francs-Bourgeois", city: "Paris", type: "STUDIO" as const, rooms: 1, surface: 28, monthlyRent: 1200, icalUrl: "https://www.airbnb.com/calendar/ical/studio-marais.ics" },
+  // 5 Properties
+  console.log("\n🏠 Creating 5 properties...")
+  const props = []
+  const propData = [
+    { name: "Studio Marais", address: "18 rue des Francs-Bourgeois", city: "Paris", type: "STUDIO" as const, rooms: 1, surface: 28, monthlyRent: 950, icalUrl: "https://www.airbnb.com/calendar/ical/studio-marais.ics" },
     { name: "T3 Bastille", address: "45 rue de la Roquette", city: "Paris", type: "APARTMENT" as const, rooms: 3, surface: 65, monthlyRent: 1800, icalUrl: "https://www.airbnb.com/calendar/ical/t3-bastille.ics", icalUrlBooking: "https://admin.booking.com/hotel/ical/t3-bastille" },
     { name: "T2 République", address: "12 boulevard Voltaire", city: "Paris", type: "APARTMENT" as const, rooms: 2, surface: 45, monthlyRent: 1400 },
     { name: "Loft Oberkampf", address: "7 rue Oberkampf", city: "Paris", type: "LOFT" as const, rooms: 2, surface: 55, monthlyRent: 1600, icalUrl: "https://www.airbnb.com/calendar/ical/loft-oberkampf.ics" },
+    { name: "Villa Cannes", address: "23 boulevard de la Croisette", city: "Cannes", type: "VILLA" as const, rooms: 4, surface: 120, monthlyRent: 2500 },
+  ]
+  for (const d of propData) {
+    const p = await prisma.property.create({ data: { ...d, userId } })
+    props.push(p)
+    console.log(`  ✅ ${p.name}`)
+  }
+
+  // 40 Bookings over 6 months (Oct 2025 → Mar 2026)
+  console.log("\n📅 Creating 40 bookings...")
+  const bookings = [
+    // Studio Marais — 80-100€/nuit, good occupancy
+    { pi: 0, guest: "Jean Dupont", ci: date(2025,10,2), co: date(2025,10,5), n: 3, amt: 270, net: 243, plat: "AIRBNB" as const },
+    { pi: 0, guest: "Emma Wilson", ci: date(2025,10,12), co: date(2025,10,16), n: 4, amt: 360, net: 324, plat: "AIRBNB" as const },
+    { pi: 0, guest: "Pierre Martin", ci: date(2025,10,22), co: date(2025,10,25), n: 3, amt: 285, net: 242, plat: "BOOKING" as const },
+    { pi: 0, guest: "Sarah Connor", ci: date(2025,11,3), co: date(2025,11,8), n: 5, amt: 450, net: 405, plat: "AIRBNB" as const },
+    { pi: 0, guest: "Luca Rossi", ci: date(2025,11,15), co: date(2025,11,18), n: 3, amt: 270, net: 243, plat: "BOOKING" as const },
+    { pi: 0, guest: "Anna Schmidt", ci: date(2025,12,1), co: date(2025,12,6), n: 5, amt: 475, net: 428, plat: "AIRBNB" as const },
+    { pi: 0, guest: "Marc Leblanc", ci: date(2025,12,20), co: date(2025,12,26), n: 6, amt: 600, net: 540, plat: "AIRBNB" as const },
+    { pi: 0, guest: "Yuki Tanaka", ci: date(2026,1,5), co: date(2026,1,9), n: 4, amt: 340, net: 306, plat: "BOOKING" as const },
+    // T3 Bastille — 150-200€/nuit, premium
+    { pi: 1, guest: "Marie Leroy", ci: date(2025,10,1), co: date(2025,10,6), n: 5, amt: 950, net: 855, plat: "AIRBNB" as const },
+    { pi: 1, guest: "Hans Mueller", ci: date(2025,10,15), co: date(2025,10,21), n: 6, amt: 1080, net: 918, plat: "BOOKING" as const },
+    { pi: 1, guest: "Sophie Bernard", ci: date(2025,11,1), co: date(2025,11,6), n: 5, amt: 900, net: 810, plat: "AIRBNB" as const },
+    { pi: 1, guest: "Tom Smith", ci: date(2025,11,20), co: date(2025,11,25), n: 5, amt: 950, net: 855, plat: "BOOKING" as const },
+    { pi: 1, guest: "Ana Garcia", ci: date(2025,12,10), co: date(2025,12,16), n: 6, amt: 1200, net: 1080, plat: "AIRBNB" as const },
+    { pi: 1, guest: "James Brown", ci: date(2026,1,2), co: date(2026,1,8), n: 6, amt: 1100, net: 990, plat: "AIRBNB" as const },
+    { pi: 1, guest: "Clara Dubois", ci: date(2026,2,1), co: date(2026,2,5), n: 4, amt: 760, net: 684, plat: "BOOKING" as const },
+    { pi: 1, guest: "David Kim", ci: date(2026,3,1), co: date(2026,3,7), n: 6, amt: 1140, net: 1026, plat: "AIRBNB" as const },
+    // T2 République — 100-130€/nuit
+    { pi: 2, guest: "François Petit", ci: date(2025,10,5), co: date(2025,10,9), n: 4, amt: 480, net: 432, plat: "AIRBNB" as const },
+    { pi: 2, guest: "Elena Volkov", ci: date(2025,10,20), co: date(2025,10,23), n: 3, amt: 360, net: 306, plat: "BOOKING" as const },
+    { pi: 2, guest: "Marco Polo", ci: date(2025,11,8), co: date(2025,11,12), n: 4, amt: 480, net: 432, plat: "AIRBNB" as const },
+    { pi: 2, guest: "Lisa Chen", ci: date(2025,12,1), co: date(2025,12,5), n: 4, amt: 520, net: 468, plat: "AIRBNB" as const },
+    { pi: 2, guest: "Alex Fontaine", ci: date(2025,12,15), co: date(2025,12,19), n: 4, amt: 500, net: 425, plat: "BOOKING" as const },
+    { pi: 2, guest: "Paul Moreau", ci: date(2026,1,10), co: date(2026,1,14), n: 4, amt: 440, net: 396, plat: "AIRBNB" as const },
+    { pi: 2, guest: "Nina Petrov", ci: date(2026,2,5), co: date(2026,2,9), n: 4, amt: 480, net: 432, plat: "BOOKING" as const },
+    { pi: 2, guest: "Hugo Martin", ci: date(2026,3,10), co: date(2026,3,14), n: 4, amt: 520, net: 468, plat: "AIRBNB" as const },
+    // Loft Oberkampf — DÉFICITAIRE: peu de réservations, prix bas
+    { pi: 3, guest: "Pierre Durand", ci: date(2025,10,15), co: date(2025,10,18), n: 3, amt: 240, net: 216, plat: "AIRBNB" as const },
+    { pi: 3, guest: "Julie Blanc", ci: date(2025,11,20), co: date(2025,11,22), n: 2, amt: 160, net: 144, plat: "BOOKING" as const },
+    { pi: 3, guest: "Thomas Bernard", ci: date(2025,12,28), co: date(2025,12,30), n: 2, amt: 180, net: 162, plat: "AIRBNB" as const },
+    { pi: 3, guest: "Marie Dupuis", ci: date(2026,2,10), co: date(2026,2,12), n: 2, amt: 160, net: 144, plat: "BOOKING" as const },
+    // Villa Cannes — 200-250€/nuit, saisonnier
+    { pi: 4, guest: "Richard Gere", ci: date(2025,10,1), co: date(2025,10,8), n: 7, amt: 1750, net: 1575, plat: "AIRBNB" as const },
+    { pi: 4, guest: "Catherine Deneuve", ci: date(2025,10,20), co: date(2025,10,27), n: 7, amt: 1680, net: 1428, plat: "BOOKING" as const },
+    { pi: 4, guest: "George Clooney", ci: date(2025,11,5), co: date(2025,11,12), n: 7, amt: 1540, net: 1386, plat: "AIRBNB" as const },
+    { pi: 4, guest: "Monica Bellucci", ci: date(2025,12,20), co: date(2025,12,31), n: 11, amt: 2750, net: 2475, plat: "AIRBNB" as const },
+    { pi: 4, guest: "Brad Pitt", ci: date(2026,1,5), co: date(2026,1,12), n: 7, amt: 1540, net: 1386, plat: "BOOKING" as const },
+    { pi: 4, guest: "Angelina Jolie", ci: date(2026,2,1), co: date(2026,2,8), n: 7, amt: 1680, net: 1512, plat: "AIRBNB" as const },
+    { pi: 4, guest: "Leonardo DiCaprio", ci: date(2026,2,20), co: date(2026,2,28), n: 8, amt: 2000, net: 1800, plat: "AIRBNB" as const },
+    { pi: 4, guest: "Penélope Cruz", ci: date(2026,3,5), co: date(2026,3,12), n: 7, amt: 1750, net: 1575, plat: "BOOKING" as const },
+    // Extra bookings to reach 40
+    { pi: 0, guest: "Robert Duval", ci: date(2026,2,1), co: date(2026,2,4), n: 3, amt: 285, net: 257, plat: "AIRBNB" as const },
+    { pi: 0, guest: "Claire Martin", ci: date(2026,2,15), co: date(2026,2,19), n: 4, amt: 380, net: 342, plat: "BOOKING" as const },
+    { pi: 0, guest: "Antoine Leclerc", ci: date(2026,3,5), co: date(2026,3,9), n: 4, amt: 360, net: 324, plat: "AIRBNB" as const },
+    { pi: 2, guest: "Sophie Lambert", ci: date(2025,11,25), co: date(2025,11,29), n: 4, amt: 480, net: 432, plat: "AIRBNB" as const },
   ]
 
-  for (const data of propertyData) {
-    try {
-      const property = await prisma.property.create({
-        data: { ...data, userId: targetUserId },
-      })
-      properties.push(property)
-      console.log(`  ✅ ${property.name} (${property.id})`)
-    } catch (err) {
-      console.error(`  ❌ Failed to create ${data.name}:`, err)
-    }
+  let bCount = 0
+  for (const b of bookings) {
+    await prisma.booking.create({
+      data: {
+        propertyId: props[b.pi].id,
+        guestName: b.guest,
+        checkIn: b.ci,
+        checkOut: b.co,
+        nights: b.n,
+        totalAmount: b.amt,
+        netAmount: b.net,
+        platform: b.plat,
+        source: "CSV",
+      },
+    })
+    bCount++
   }
+  console.log(`  ✅ ${bCount} bookings`)
 
-  if (properties.length === 0) {
-    console.error("❌ No properties created. Aborting.")
-    process.exit(1)
-  }
-
-  // Helper for dates
-  const today = new Date()
-  function daysAgo(days: number) {
-    const d = new Date(today)
-    d.setDate(d.getDate() - days)
-    return d
-  }
-
-  // Create 20 bookings
-  console.log("\n📅 Creating bookings...")
-  const bookingsData = [
-    { propertyIdx: 0, guestName: "Jean Dupont", checkIn: daysAgo(85), checkOut: daysAgo(82), nights: 3, totalAmount: 420, netAmount: 378, platform: "AIRBNB" as const, source: "ICAL" as const },
-    { propertyIdx: 0, guestName: "Emma Wilson", checkIn: daysAgo(75), checkOut: daysAgo(71), nights: 4, totalAmount: 560, netAmount: 504, platform: "AIRBNB" as const, source: "CSV" as const },
-    { propertyIdx: 0, guestName: "Pierre Martin", checkIn: daysAgo(60), checkOut: daysAgo(57), nights: 3, totalAmount: 450, netAmount: 405, platform: "BOOKING" as const, source: "CSV" as const },
-    { propertyIdx: 0, guestName: "Sarah Connor", checkIn: daysAgo(45), checkOut: daysAgo(40), nights: 5, totalAmount: 750, netAmount: 675, platform: "AIRBNB" as const, source: "ICAL" as const },
-    { propertyIdx: 0, guestName: "Luca Rossi", checkIn: daysAgo(20), checkOut: daysAgo(17), nights: 3, totalAmount: 480, netAmount: 432, platform: "AIRBNB" as const, source: "CSV" as const },
-    { propertyIdx: 1, guestName: "Marie Leroy", checkIn: daysAgo(88), checkOut: daysAgo(83), nights: 5, totalAmount: 1250, netAmount: 1125, platform: "AIRBNB" as const, source: "CSV" as const },
-    { propertyIdx: 1, guestName: "Hans Mueller", checkIn: daysAgo(70), checkOut: daysAgo(64), nights: 6, totalAmount: 1320, netAmount: 1122, platform: "BOOKING" as const, source: "CSV" as const },
-    { propertyIdx: 1, guestName: "Sophie Bernard", checkIn: daysAgo(55), checkOut: daysAgo(50), nights: 5, totalAmount: 1100, netAmount: 990, platform: "AIRBNB" as const, source: "ICAL" as const },
-    { propertyIdx: 1, guestName: "Tom Smith", checkIn: daysAgo(35), checkOut: daysAgo(30), nights: 5, totalAmount: 1200, netAmount: 1080, platform: "BOOKING" as const, source: "CSV" as const },
-    { propertyIdx: 1, guestName: "Ana Garcia", checkIn: daysAgo(15), checkOut: daysAgo(10), nights: 5, totalAmount: 1350, netAmount: 1215, platform: "AIRBNB" as const, source: "CSV" as const },
-    { propertyIdx: 2, guestName: "François Petit", checkIn: daysAgo(80), checkOut: daysAgo(76), nights: 4, totalAmount: 680, netAmount: 612, platform: "AIRBNB" as const, source: "CSV" as const },
-    { propertyIdx: 2, guestName: "James Brown", checkIn: daysAgo(65), checkOut: daysAgo(62), nights: 3, totalAmount: 540, netAmount: 486, platform: "BOOKING" as const, source: "CSV" as const },
-    { propertyIdx: 2, guestName: "Clara Dubois", checkIn: daysAgo(42), checkOut: daysAgo(38), nights: 4, totalAmount: 720, netAmount: 648, platform: "AIRBNB" as const, source: "ICAL" as const },
-    { propertyIdx: 2, guestName: "Marco Polo", checkIn: daysAgo(25), checkOut: daysAgo(22), nights: 3, totalAmount: 510, netAmount: 459, platform: "AIRBNB" as const, source: "CSV" as const },
-    { propertyIdx: 2, guestName: "Yuki Tanaka", checkIn: daysAgo(8), checkOut: daysAgo(5), nights: 3, totalAmount: 570, netAmount: 513, platform: "BOOKING" as const, source: "CSV" as const },
-    { propertyIdx: 3, guestName: "Paul Moreau", checkIn: daysAgo(82), checkOut: daysAgo(76), nights: 6, totalAmount: 1440, netAmount: 1296, platform: "AIRBNB" as const, source: "CSV" as const },
-    { propertyIdx: 3, guestName: "Lisa Chen", checkIn: daysAgo(62), checkOut: daysAgo(58), nights: 4, totalAmount: 960, netAmount: 864, platform: "AIRBNB" as const, source: "ICAL" as const },
-    { propertyIdx: 3, guestName: "David Kim", checkIn: daysAgo(48), checkOut: daysAgo(43), nights: 5, totalAmount: 1150, netAmount: 1035, platform: "BOOKING" as const, source: "CSV" as const },
-    { propertyIdx: 3, guestName: "Elena Volkov", checkIn: daysAgo(28), checkOut: daysAgo(24), nights: 4, totalAmount: 1040, netAmount: 936, platform: "AIRBNB" as const, source: "CSV" as const },
-    { propertyIdx: 3, guestName: "Alex Fontaine", checkIn: daysAgo(10), checkOut: daysAgo(5), nights: 5, totalAmount: 1250, netAmount: 1125, platform: "AIRBNB" as const, source: "CSV" as const },
+  // 30 Expenses
+  console.log("\n💰 Creating 30 expenses...")
+  const expenses = [
+    // Ménage — 45€/réservation (pour chaque logement sauf Loft qui paie plus cher)
+    { pi: 0, cat: "CLEANING" as const, label: "Ménage oct", amt: 135, d: date(2025,10,31), rec: false },
+    { pi: 0, cat: "CLEANING" as const, label: "Ménage nov", amt: 90, d: date(2025,11,30), rec: false },
+    { pi: 0, cat: "CLEANING" as const, label: "Ménage déc", amt: 90, d: date(2025,12,31), rec: false },
+    { pi: 1, cat: "CLEANING" as const, label: "Ménage oct-nov", amt: 180, d: date(2025,11,30), rec: false },
+    { pi: 1, cat: "CLEANING" as const, label: "Ménage déc-jan", amt: 135, d: date(2026,1,31), rec: false },
+    { pi: 2, cat: "CLEANING" as const, label: "Ménage Q4", amt: 225, d: date(2025,12,31), rec: false },
+    { pi: 3, cat: "CLEANING" as const, label: "Ménage Loft (premium)", amt: 280, d: date(2025,12,31), rec: false },
+    { pi: 4, cat: "CLEANING" as const, label: "Ménage Villa oct-nov", amt: 270, d: date(2025,11,30), rec: false },
+    { pi: 4, cat: "CLEANING" as const, label: "Ménage Villa déc-mar", amt: 360, d: date(2026,3,31), rec: false },
+    // Assurance — 80€/mois global
+    { pi: null, cat: "INSURANCE" as const, label: "Assurance RC Pro oct", amt: 80, d: date(2025,10,1), rec: true, freq: "MONTHLY" as const },
+    { pi: null, cat: "INSURANCE" as const, label: "Assurance RC Pro nov", amt: 80, d: date(2025,11,1), rec: true, freq: "MONTHLY" as const },
+    { pi: null, cat: "INSURANCE" as const, label: "Assurance RC Pro déc", amt: 80, d: date(2025,12,1), rec: true, freq: "MONTHLY" as const },
+    { pi: null, cat: "INSURANCE" as const, label: "Assurance RC Pro jan", amt: 80, d: date(2026,1,1), rec: true, freq: "MONTHLY" as const },
+    { pi: null, cat: "INSURANCE" as const, label: "Assurance RC Pro fév", amt: 80, d: date(2026,2,1), rec: true, freq: "MONTHLY" as const },
+    { pi: null, cat: "INSURANCE" as const, label: "Assurance RC Pro mar", amt: 80, d: date(2026,3,1), rec: true, freq: "MONTHLY" as const },
+    // Consommables — 30€/mois par logement
+    { pi: 0, cat: "SUPPLIES" as const, label: "Kit accueil Studio Q4", amt: 90, d: date(2025,12,15), rec: false },
+    { pi: 1, cat: "SUPPLIES" as const, label: "Kit accueil T3 Q4", amt: 90, d: date(2025,12,15), rec: false },
+    { pi: 4, cat: "SUPPLIES" as const, label: "Kit luxe Villa", amt: 180, d: date(2025,12,15), rec: false },
+    // Maintenance ponctuelle
+    { pi: 1, cat: "MAINTENANCE" as const, label: "Réparation chauffe-eau", amt: 320, d: date(2025,11,15) },
+    { pi: 3, cat: "MAINTENANCE" as const, label: "Peinture complète Loft", amt: 1800, d: date(2025,10,1) },
+    { pi: 3, cat: "MAINTENANCE" as const, label: "Plomberie Loft", amt: 450, d: date(2025,12,5) },
+    { pi: 4, cat: "MAINTENANCE" as const, label: "Piscine entretien annuel", amt: 650, d: date(2025,10,15) },
+    // Loyer mensuel (2 logements loués)
+    { pi: 0, cat: "RENT" as const, label: "Loyer Studio oct-mar", amt: 5700, d: date(2026,3,1), rec: true, freq: "MONTHLY" as const },
+    { pi: 3, cat: "RENT" as const, label: "Loyer Loft oct-mar", amt: 9600, d: date(2026,3,1), rec: true, freq: "MONTHLY" as const },
+    // Commissions plateformes
+    { pi: null, cat: "PLATFORM_FEE" as const, label: "Commission Airbnb Q4", amt: 890, d: date(2025,12,31) },
+    { pi: null, cat: "PLATFORM_FEE" as const, label: "Commission Booking Q4", amt: 420, d: date(2025,12,31) },
+    { pi: null, cat: "PLATFORM_FEE" as const, label: "Commission Airbnb Q1", amt: 780, d: date(2026,3,31) },
+    // Taxes + divers
+    { pi: null, cat: "TAX" as const, label: "CFE 2025", amt: 890, d: date(2025,12,15) },
+    { pi: null, cat: "MARKETING" as const, label: "Photos pro 5 logements", amt: 500, d: date(2025,10,5) },
+    { pi: 4, cat: "FURNISHING" as const, label: "Mobilier terrasse Villa", amt: 1200, d: date(2025,10,10) },
   ]
 
-  let bookingCount = 0
-  for (const { propertyIdx, ...data } of bookingsData) {
-    if (!properties[propertyIdx]) continue
-    try {
-      const booking = await prisma.booking.create({
-        data: { ...data, propertyId: properties[propertyIdx].id },
-      })
-      bookingCount++
-      if (bookingCount % 5 === 0) console.log(`  ✅ ${bookingCount} bookings created...`)
-    } catch (err) {
-      console.error(`  ❌ Failed booking for ${data.guestName}:`, err)
-    }
+  let eCount = 0
+  for (const e of expenses) {
+    await prisma.expense.create({
+      data: {
+        userId,
+        propertyId: e.pi !== null ? props[e.pi].id : undefined,
+        category: e.cat,
+        label: e.label,
+        amount: e.amt,
+        date: e.d,
+        isRecurring: e.rec || false,
+        frequency: (e as { freq?: string }).freq || undefined,
+      },
+    })
+    eCount++
   }
-  console.log(`  ✅ Total: ${bookingCount} bookings`)
-
-  // Create 15 expenses
-  console.log("\n💰 Creating expenses...")
-  const expensesData = [
-    { propertyIdx: 0, category: "CLEANING" as const, label: "Ménage mensuel Studio", amount: 80, date: daysAgo(60), isRecurring: true, frequency: "MONTHLY" as const },
-    { propertyIdx: 1, category: "CLEANING" as const, label: "Ménage mensuel T3", amount: 120, date: daysAgo(60), isRecurring: true, frequency: "MONTHLY" as const },
-    { propertyIdx: 3, category: "CLEANING" as const, label: "Ménage mensuel Loft", amount: 100, date: daysAgo(60), isRecurring: true, frequency: "MONTHLY" as const },
-    { propertyIdx: null, category: "INSURANCE" as const, label: "Assurance RC Pro", amount: 150, date: daysAgo(75), isRecurring: true, frequency: "MONTHLY" as const },
-    { propertyIdx: 0, category: "SUPPLIES" as const, label: "Kit accueil (savon, café, thé)", amount: 45, date: daysAgo(50) },
-    { propertyIdx: 1, category: "MAINTENANCE" as const, label: "Réparation chauffe-eau", amount: 320, date: daysAgo(40) },
-    { propertyIdx: 1, category: "FURNISHING" as const, label: "Nouveaux draps", amount: 180, date: daysAgo(35) },
-    { propertyIdx: 2, category: "SUPPLIES" as const, label: "Produits ménagers", amount: 35, date: daysAgo(30) },
-    { propertyIdx: 2, category: "MAINTENANCE" as const, label: "Serrurier (changement serrure)", amount: 150, date: daysAgo(25) },
-    { propertyIdx: 3, category: "FURNISHING" as const, label: "Canapé neuf", amount: 650, date: daysAgo(55) },
-    { propertyIdx: 3, category: "UTILITIES" as const, label: "Électricité mars", amount: 85, date: daysAgo(45) },
-    { propertyIdx: null, category: "TAX" as const, label: "CFE 2026", amount: 890, date: daysAgo(20) },
-    { propertyIdx: null, category: "MARKETING" as const, label: "Photos pro logements", amount: 350, date: daysAgo(70) },
-    { propertyIdx: 0, category: "PLATFORM_FEE" as const, label: "Commission Airbnb mars", amount: 126, date: daysAgo(60) },
-    { propertyIdx: 1, category: "PLATFORM_FEE" as const, label: "Commission Booking mars", amount: 198, date: daysAgo(60) },
-  ]
-
-  let expenseCount = 0
-  for (const { propertyIdx, ...data } of expensesData) {
-    try {
-      const expense = await prisma.expense.create({
-        data: {
-          ...data,
-          userId: targetUserId,
-          propertyId: propertyIdx !== null ? properties[propertyIdx]?.id : undefined,
-        },
-      })
-      expenseCount++
-    } catch (err) {
-      console.error(`  ❌ Failed expense "${data.label}":`, err)
-    }
-  }
-  console.log(`  ✅ Total: ${expenseCount} expenses`)
+  console.log(`  ✅ ${eCount} expenses`)
 
   // Verify
   console.log("\n📊 Verification:")
   const counts = {
-    properties: await prisma.property.count({ where: { userId: targetUserId } }),
-    bookings: await prisma.booking.count({ where: { property: { userId: targetUserId } } }),
-    expenses: await prisma.expense.count({ where: { userId: targetUserId } }),
+    properties: await prisma.property.count({ where: { userId } }),
+    bookings: await prisma.booking.count({ where: { property: { userId } } }),
+    expenses: await prisma.expense.count({ where: { userId } }),
   }
   console.log(`  Properties: ${counts.properties}`)
   console.log(`  Bookings: ${counts.bookings}`)
   console.log(`  Expenses: ${counts.expenses}`)
 
-  if (counts.properties === 0 || counts.bookings === 0) {
-    console.error("\n❌ Seed verification failed — data not persisted!")
-    process.exit(1)
-  }
+  // Check Loft is deficitaire
+  const loftBookings = await prisma.booking.findMany({ where: { propertyId: props[3].id } })
+  const loftExpenses = await prisma.expense.findMany({ where: { propertyId: props[3].id } })
+  const loftRev = loftBookings.reduce((s, b) => s + b.totalAmount, 0)
+  const loftExp = loftExpenses.reduce((s, e) => s + e.amount, 0)
+  console.log(`\n  🔴 Loft Oberkampf: revenus ${loftRev}€, dépenses ${loftExp}€ → ${loftRev - loftExp > 0 ? "BÉNÉFICIAIRE" : "DÉFICITAIRE ✅"}`)
 
   console.log("\n✅ Seed complete!")
 }
 
 main()
-  .catch((e) => {
-    console.error("❌ Seed failed:", e)
-    process.exit(1)
-  })
-  .finally(async () => {
-    await prisma.$disconnect()
-  })
+  .catch((e) => { console.error("❌ Seed failed:", e); process.exit(1) })
+  .finally(async () => { await prisma.$disconnect() })
