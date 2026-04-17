@@ -17,16 +17,23 @@ vi.mock("@/lib/supabase/server", () => ({
 
 import { GET } from "../route"
 
+function mockRequest(params?: Record<string, string>) {
+  const url = new URL("http://localhost/api/dashboard")
+  if (params) {
+    for (const [k, v] of Object.entries(params)) url.searchParams.set(k, v)
+  }
+  return new Request(url)
+}
+
 describe("dashboard non-regression", () => {
   beforeEach(() => { vi.clearAllMocks() })
 
-  // Non-regression: PR #9, bug #3 — zero properties must not cause division by zero
   it("returns 0 for all stats when user has no properties", async () => {
     mockGetUser.mockResolvedValue({ data: { user: { id: "u1" } } })
     mockPropertyFindMany.mockResolvedValue([])
     mockExpenseFindMany.mockResolvedValue([])
 
-    const res = await GET()
+    const res = await GET(mockRequest())
     const data = await res.json()
 
     expect(data.stats.occupancyRate).toBe(0)
@@ -37,7 +44,6 @@ describe("dashboard non-regression", () => {
     expect(Number.isNaN(data.stats.revPAR)).toBe(false)
   })
 
-  // Non-regression: PR #9, bug #3 — properties with no bookings must not NaN
   it("returns 0% occupancy for properties with no bookings", async () => {
     mockGetUser.mockResolvedValue({ data: { user: { id: "u1" } } })
     mockPropertyFindMany.mockResolvedValue([
@@ -45,7 +51,7 @@ describe("dashboard non-regression", () => {
     ])
     mockExpenseFindMany.mockResolvedValue([])
 
-    const res = await GET()
+    const res = await GET(mockRequest())
     const data = await res.json()
 
     expect(data.profitability[0].occupancy).toBe(0)
@@ -53,7 +59,6 @@ describe("dashboard non-regression", () => {
     expect(Number.isNaN(data.profitability[0].occupancy)).toBe(false)
   })
 
-  // Non-regression: PR #9, bug #11 — malformed month strings must be filtered
   it("filters out invalid month formats in occupancy data", async () => {
     mockGetUser.mockResolvedValue({ data: { user: { id: "u1" } } })
     mockPropertyFindMany.mockResolvedValue([
@@ -67,7 +72,7 @@ describe("dashboard non-regression", () => {
     ])
     mockExpenseFindMany.mockResolvedValue([])
 
-    const res = await GET()
+    const res = await GET(mockRequest())
     const data = await res.json()
 
     for (const point of data.occupancyData) {
@@ -76,7 +81,6 @@ describe("dashboard non-regression", () => {
     }
   })
 
-  // Non-regression: PR #9, bug #29 — real days in month (not hardcoded 30)
   it("uses real days in month for occupancy calculation", async () => {
     mockGetUser.mockResolvedValue({ data: { user: { id: "u1" } } })
     mockPropertyFindMany.mockResolvedValue([
@@ -90,12 +94,11 @@ describe("dashboard non-regression", () => {
     ])
     mockExpenseFindMany.mockResolvedValue([])
 
-    const res = await GET()
+    const res = await GET(mockRequest())
     const data = await res.json()
 
     const febPoint = data.occupancyData.find((p: { month: string }) => p.month === "2026-02")
     if (febPoint) {
-      // Feb 2026 has 28 days, 1 property, 28 nights booked = 100%
       expect(febPoint.occupancy).toBe(100)
     }
   })
