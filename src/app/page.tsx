@@ -1,31 +1,34 @@
 import Link from "next/link"
 import type { Metadata } from "next"
-import { BarChart3, Home, Bell } from "lucide-react"
+import { BarChart3, Home, Bell, ArrowRight } from "lucide-react"
 
 export const metadata: Metadata = {
-  title: "ConciergeFlow — Suivi de rentabilité pour conciergeries",
-  description:
-    "Tous vos logements, toutes vos plateformes, une seule marge nette. Le dashboard de rentabilité pour conciergeries Airbnb et Booking.",
+  title: "ConciergeFlow — Savez-vous quel logement vous coûte de l'argent ?",
+  description: "ConciergeFlow calcule la marge nette réelle de chaque logement, sur toutes vos plateformes. Le dashboard de rentabilité pour conciergeries Airbnb et Booking.",
+  openGraph: {
+    title: "ConciergeFlow",
+    description: "Suivi de rentabilité pour conciergeries Airbnb/Booking",
+    type: "website",
+    locale: "fr_FR",
+    siteName: "ConciergeFlow",
+  },
 }
 
 const features = [
   {
     icon: BarChart3,
     title: "Import automatique",
-    description:
-      "Synchronisez vos calendriers iCal et importez vos revenus CSV depuis Airbnb et Booking en un clic.",
+    description: "Connectez vos calendriers Airbnb et Booking. Les réservations se synchronisent. Les montants s'importent depuis vos CSV.",
   },
   {
     icon: Home,
     title: "Marge par logement",
-    description:
-      "Visualisez le revenu net, les dépenses et la marge réelle de chaque logement, en temps réel.",
+    description: "Revenus - dépenses = la vérité. Pour chaque logement, chaque mois, sans tricher.",
   },
   {
     icon: Bell,
-    title: "Alertes rentabilité",
-    description:
-      "Recevez une alerte quand un logement passe sous le seuil de rentabilité que vous avez défini.",
+    title: "Alertes intelligentes",
+    description: "Soyez prévenu quand un logement perd de l'argent. Avant que ça devienne un problème.",
   },
 ]
 
@@ -57,26 +60,26 @@ export default function LandingPage() {
       </header>
 
       {/* Hero */}
-      <main className="flex flex-1 flex-col items-center justify-center px-6 py-20 text-center">
+      <main className="flex flex-1 flex-col items-center px-6 py-20 text-center">
         <div className="mx-auto max-w-3xl">
           <div className="mb-6 inline-flex items-center rounded-full border border-violet-500/20 bg-violet-500/10 px-4 py-1.5 text-sm text-violet-400">
             Pour les conciergeries de 5 à 30 logements
           </div>
           <h1 className="text-4xl font-bold tracking-tight sm:text-5xl lg:text-6xl">
-            Tous vos logements, toutes vos plateformes,{" "}
-            <span className="text-violet-400">une seule marge nette.</span>
+            Savez-vous quel logement vous coûte{" "}
+            <span className="text-violet-400">de l&apos;argent ?</span>
           </h1>
           <p className="mx-auto mt-6 max-w-xl text-lg text-muted-foreground">
-            Le dashboard de rentabilité pour conciergeries Airbnb et Booking.
-            Importez vos revenus, suivez vos dépenses, visualisez votre marge
-            réelle par logement.
+            ConciergeFlow calcule la marge nette réelle de chaque logement,
+            sur toutes vos plateformes. Plus de doute, plus de surprises.
           </p>
           <div className="mt-10 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
             <Link
               href="/register"
-              className="w-full rounded-lg bg-violet-600 px-8 py-3 text-base font-medium text-white transition-colors hover:bg-violet-700 sm:w-auto"
+              className="group flex w-full items-center justify-center gap-2 rounded-lg bg-violet-600 px-8 py-3 text-base font-medium text-white transition-colors hover:bg-violet-700 sm:w-auto"
             >
               Commencer gratuitement
+              <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
             </Link>
             <Link
               href="/login"
@@ -86,26 +89,53 @@ export default function LandingPage() {
             </Link>
           </div>
         </div>
+
+        {/* Features */}
+        <section className="mx-auto mt-24 max-w-5xl">
+          <div className="grid gap-8 sm:grid-cols-3">
+            {features.map((feature) => (
+              <div key={feature.title} className="rounded-xl border border-border bg-card p-6 text-left">
+                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-violet-600/15 text-violet-400">
+                  <feature.icon className="h-6 w-6" />
+                </div>
+                <h3 className="mb-2 text-lg font-semibold">{feature.title}</h3>
+                <p className="text-sm leading-relaxed text-muted-foreground">{feature.description}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* Differentiation */}
+        <section className="mx-auto mt-24 max-w-2xl">
+          <div className="rounded-xl border border-border bg-card p-8 text-left">
+            <h2 className="mb-4 text-xl font-bold">Pas un PMS de plus</h2>
+            <p className="text-muted-foreground leading-relaxed">
+              Lodgify gère vos réservations. PriceLabs optimise vos prix.{" "}
+              <span className="text-foreground font-medium">
+                ConciergeFlow vous dit si vous gagnez vraiment de l&apos;argent.
+              </span>{" "}
+              Logement par logement, mois par mois, net de toutes charges.
+            </p>
+          </div>
+        </section>
       </main>
 
-      {/* Features */}
-      <section className="border-t border-border px-6 py-20">
-        <div className="mx-auto grid max-w-5xl gap-8 sm:grid-cols-3">
-          {features.map((feature) => (
-            <div key={feature.title} className="text-center">
-              <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-violet-600/15 text-violet-400">
-                <feature.icon className="h-6 w-6" />
-              </div>
-              <h3 className="mb-2 text-lg font-semibold">{feature.title}</h3>
-              <p className="text-sm text-muted-foreground">{feature.description}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
       {/* Footer */}
-      <footer className="border-t border-border px-6 py-8 text-center text-sm text-muted-foreground">
-        © 2026 ConciergeFlow. Tous droits réservés.
+      <footer className="border-t border-border px-6 py-8">
+        <div className="mx-auto flex max-w-5xl flex-col items-center justify-between gap-4 sm:flex-row">
+          <div className="flex items-center gap-2">
+            <div className="flex h-6 w-6 items-center justify-center rounded bg-violet-600 text-xs font-bold text-white">
+              C
+            </div>
+            <span className="text-sm text-muted-foreground">ConciergeFlow</span>
+          </div>
+          <div className="flex gap-6 text-sm text-muted-foreground">
+            <span>© 2026</span>
+            <Link href="#" className="hover:text-foreground">Mentions légales</Link>
+            <Link href="#" className="hover:text-foreground">CGU</Link>
+            <Link href="#" className="hover:text-foreground">Contact</Link>
+          </div>
+        </div>
       </footer>
     </div>
   )
