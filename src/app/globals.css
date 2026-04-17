@@ -124,17 +124,20 @@
     font-family: var(--font-sans), Arial, Helvetica, sans-serif;
   }
 
-  .recharts-wrapper:focus,
-  .recharts-wrapper:focus-visible,
-  .recharts-surface:focus,
-  .recharts-surface:focus-visible {
-    outline: none !important;
-    box-shadow: none !important;
-  }
+}
 
-  /* Masque le rectangle gris au survol des barres */
-  .recharts-tooltip-cursor {
-    fill: transparent !important;
-    stroke: transparent !important;
-  }
+/* Hors @layer pour priorité maximale sur Recharts */
+.recharts-wrapper:focus,
+.recharts-wrapper:focus-visible,
+.recharts-surface:focus,
+.recharts-surface:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.recharts-tooltip-cursor {
+  fill: transparent !important;
+  stroke: transparent !important;
+  opacity: 0 !important;
+  display: none !important;
 }
