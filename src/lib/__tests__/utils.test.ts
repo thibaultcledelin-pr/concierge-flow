@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest"
-import { formatCurrency, calculateMargin, calculateNights, calculateRevenuePerNight, calculateOccupancyRate, calculateRevPAR } from "../utils"
+import { formatCurrency, calculateMargin, calculateNights, calculateRevenuePerNight, calculateOccupancyRate, calculateRevPAR, calculateADR } from "../utils"
 
 describe("utils", () => {
   describe("formatCurrency", () => {
@@ -81,6 +81,16 @@ describe("utils", () => {
 
     it("handles partial occupancy", () => {
       expect(calculateRevPAR(1500, 30)).toBe(50)
+    })
+  })
+
+  describe("calculateADR", () => {
+    it("calculates average daily rate", () => {
+      expect(calculateADR(3000, 20)).toBe(150)
+    })
+
+    it("returns 0 when no occupied nights", () => {
+      expect(calculateADR(1000, 0)).toBe(0)
     })
   })
 })
