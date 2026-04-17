@@ -44,7 +44,8 @@ export function RevenueChart({ data }: RevenueChartProps) {
         <CardTitle className="text-base">Revenus vs Dépenses</CardTitle>
       </CardHeader>
       <CardContent>
-        <ResponsiveContainer width="100%" height={300}>
+        <div style={{ outline: "none" }} tabIndex={-1}>
+          <ResponsiveContainer width="100%" height={300}>
           <AreaChart data={data}>
             <defs>
               <linearGradient id="revGrad" x1="0" y1="0" x2="0" y2="1">
@@ -125,6 +126,7 @@ export function RevenueChart({ data }: RevenueChartProps) {
             />
           </AreaChart>
         </ResponsiveContainer>
+        </div>
       </CardContent>
     </Card>
   )
