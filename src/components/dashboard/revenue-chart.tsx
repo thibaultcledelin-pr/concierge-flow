@@ -62,18 +62,18 @@ export function RevenueChart({ data }: RevenueChartProps) {
                 <stop offset="100%" stopColor="#7c3aed" stopOpacity={0} />
               </linearGradient>
             </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" strokeOpacity={0.04} />
+            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" strokeOpacity={0.15} />
             <XAxis
               dataKey="month"
               tickFormatter={formatMonth}
-              stroke="hsl(var(--muted-foreground))"
-              fontSize={11}
+              stroke="rgba(255,255,255,0.5)"
+              fontSize={12}
               tickLine={false}
               axisLine={false}
             />
             <YAxis
-              stroke="hsl(var(--muted-foreground))"
-              fontSize={11}
+              stroke="rgba(255,255,255,0.5)"
+              fontSize={12}
               tickLine={false}
               axisLine={false}
               tickFormatter={(v: number) => v >= 1000 ? `${(v / 1000).toFixed(0)}k€` : `${v}€`}
@@ -84,7 +84,7 @@ export function RevenueChart({ data }: RevenueChartProps) {
                 border: "1px solid hsl(var(--border))",
                 borderRadius: "10px",
                 padding: "12px",
-                fontSize: "12px",
+                fontSize: "13px", color: "hsl(var(--foreground))",
               }}
               formatter={(value: number | string, name: number | string) => {
                 const labels: Record<string, string> = { revenue: "Revenus", expenses: "Dépenses", profit: "Marge nette" }
@@ -116,7 +116,7 @@ export function RevenueChart({ data }: RevenueChartProps) {
               dataKey="expenses"
               stroke="#ef4444"
               fill="none"
-              strokeWidth={2}
+              strokeWidth={2.5}
               strokeDasharray="6 3"
               dot={false}
               activeDot={{ r: 5, fill: "#ef4444", strokeWidth: 2, stroke: "hsl(var(--card))" }}
@@ -128,7 +128,7 @@ export function RevenueChart({ data }: RevenueChartProps) {
               dataKey="profit"
               stroke="#7c3aed"
               fill="url(#profitGrad)"
-              strokeWidth={2}
+              strokeWidth={2.5}
               dot={false}
               activeDot={{ r: 5, fill: "#7c3aed", strokeWidth: 2, stroke: "hsl(var(--card))" }}
               animationDuration={1400}
