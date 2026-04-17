@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, useCallback } from "react"
+import { useEffect, useState } from "react"
 import { StatsCards } from "@/components/dashboard/stats-cards"
 import { OccupancyChart } from "@/components/dashboard/occupancy-chart"
 import { RevenuePerNightChart } from "@/components/dashboard/revenue-per-night-chart"
@@ -55,8 +55,8 @@ export default function DashboardPage() {
   const [error, setError] = useState(false)
   const [selectedProperty, setSelectedProperty] = useState<string>("all")
 
-  const fetchDashboard = useCallback((propertyId?: string, signal?: AbortSignal) => {
-    const url = propertyId && propertyId !== "all"
+  function loadDashboard(propertyId: string, signal?: AbortSignal) {
+    const url = propertyId !== "all"
       ? `/api/dashboard?propertyId=${propertyId}`
       : "/api/dashboard"
     return fetch(url, signal ? { signal } : undefined)
@@ -64,24 +64,29 @@ export default function DashboardPage() {
         if (!res.ok) throw new Error()
         return res.json()
       })
-  }, [])
+  }
 
   useEffect(() => {
     const controller = new AbortController()
+    let cancelled = false
+    loadDashboard(selectedProperty, controller.signal)
+      .then((d) => { if (!cancelled) { setData(d); setLoading(false); setError(false) } })
+      .catch((err) => {
+        if (!cancelled && err.name !== "AbortError") { setError(true); setLoading(false) }
+      })
+    return () => { cancelled = true; controller.abort() }
+  }, [selectedProperty])
+
+  function handlePropertyChange(value: string) {
+    setSelectedProperty(value)
     setLoading(true)
     setError(false)
-    fetchDashboard(selectedProperty, controller.signal)
-      .then((d) => { setData(d); setLoading(false) })
-      .catch((err) => {
-        if (err.name !== "AbortError") { setError(true); setLoading(false) }
-      })
-    return () => controller.abort()
-  }, [selectedProperty, fetchDashboard])
+  }
 
   function retry() {
     setError(false)
     setLoading(true)
-    fetchDashboard(selectedProperty)
+    loadDashboard(selectedProperty)
       .then((d) => { setData(d); setLoading(false) })
       .catch(() => { setError(true); setLoading(false) })
   }
@@ -120,7 +125,7 @@ export default function DashboardPage() {
           </p>
         </div>
         {data.allProperties.length > 1 && (
-          <Select value={selectedProperty} onValueChange={setSelectedProperty}>
+          <Select value={selectedProperty} onValueChange={handlePropertyChange}>
             <SelectTrigger className="w-[220px]">
               <SelectValue placeholder="Tous les logements" />
             </SelectTrigger>
