@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import { StatsCards } from "@/components/dashboard/stats-cards"
 import { OccupancyChart } from "@/components/dashboard/occupancy-chart"
 import { RevenuePerNightChart } from "@/components/dashboard/revenue-per-night-chart"
@@ -9,6 +9,13 @@ import { RevenueChart } from "@/components/dashboard/revenue-chart"
 import { ProfitabilityTable } from "@/components/dashboard/profitability-table"
 import { PageLoading } from "@/components/ui/page-loading"
 import { PageError } from "@/components/ui/page-error"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 
 interface DashboardData {
   stats: {
@@ -39,35 +46,42 @@ interface DashboardData {
   propertyNames: string[]
   occupancyByProperty: { name: string; occupancy: number }[]
   platformData: { name: string; value: number }[]
+  allProperties: { id: string; name: string }[]
 }
 
 export default function DashboardPage() {
   const [data, setData] = useState<DashboardData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
+  const [selectedProperty, setSelectedProperty] = useState<string>("all")
 
-  useEffect(() => {
-    const controller = new AbortController()
-    fetch("/api/dashboard", { signal: controller.signal })
+  const fetchDashboard = useCallback((propertyId?: string, signal?: AbortSignal) => {
+    const url = propertyId && propertyId !== "all"
+      ? `/api/dashboard?propertyId=${propertyId}`
+      : "/api/dashboard"
+    return fetch(url, signal ? { signal } : undefined)
       .then((res) => {
         if (!res.ok) throw new Error()
         return res.json()
       })
+  }, [])
+
+  useEffect(() => {
+    const controller = new AbortController()
+    setLoading(true)
+    setError(false)
+    fetchDashboard(selectedProperty, controller.signal)
       .then((d) => { setData(d); setLoading(false) })
       .catch((err) => {
         if (err.name !== "AbortError") { setError(true); setLoading(false) }
       })
     return () => controller.abort()
-  }, [])
+  }, [selectedProperty, fetchDashboard])
 
   function retry() {
     setError(false)
     setLoading(true)
-    fetch("/api/dashboard")
-      .then((res) => {
-        if (!res.ok) throw new Error()
-        return res.json()
-      })
+    fetchDashboard(selectedProperty)
       .then((d) => { setData(d); setLoading(false) })
       .catch(() => { setError(true); setLoading(false) })
   }
@@ -92,16 +106,34 @@ export default function DashboardPage() {
     )
   }
 
+  const selectedPropertyName = selectedProperty !== "all"
+    ? data.allProperties.find((p) => p.id === selectedProperty)?.name
+    : undefined
+
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Vue d&apos;ensemble — {data.stats.propertyCount} logement{data.stats.propertyCount !== 1 ? "s" : ""}
-        </p>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Vue d&apos;ensemble — {data.stats.propertyCount} logement{data.stats.propertyCount !== 1 ? "s" : ""}
+          </p>
+        </div>
+        {data.allProperties.length > 1 && (
+          <Select value={selectedProperty} onValueChange={setSelectedProperty}>
+            <SelectTrigger className="w-[220px]">
+              <SelectValue placeholder="Tous les logements" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Tous les logements</SelectItem>
+              {data.allProperties.map((p) => (
+                <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
       </div>
 
-      {/* 3 KPI cards */}
       <StatsCards
         occupancyRate={data.stats.occupancyRate}
         avgRevenuePerNight={data.stats.avgRevenuePerNight}
@@ -109,6 +141,7 @@ export default function DashboardPage() {
         revPAR={data.stats.revPAR}
         adr={data.stats.adr}
         totalRevenue={data.stats.totalRevenue}
+        propertyName={selectedPropertyName}
       />
 
       {/* Graphe 1 — Taux d'occupation (pleine largeur) */}

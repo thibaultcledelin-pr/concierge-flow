@@ -23,6 +23,14 @@ vi.mock("@/lib/supabase/server", () => ({
 
 import { GET } from "../route"
 
+function mockRequest(params?: Record<string, string>) {
+  const url = new URL("http://localhost/api/dashboard")
+  if (params) {
+    for (const [k, v] of Object.entries(params)) url.searchParams.set(k, v)
+  }
+  return new Request(url)
+}
+
 describe("Dashboard API", () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -30,7 +38,7 @@ describe("Dashboard API", () => {
 
   it("returns 401 if not authenticated", async () => {
     mockGetUser.mockResolvedValue({ data: { user: null } })
-    const res = await GET()
+    const res = await GET(mockRequest())
     expect(res.status).toBe(401)
   })
 
@@ -54,7 +62,7 @@ describe("Dashboard API", () => {
       { amount: 50, date: new Date("2026-05-01") },
     ])
 
-    const res = await GET()
+    const res = await GET(mockRequest())
     const data = await res.json()
 
     expect(res.status).toBe(200)
@@ -80,7 +88,7 @@ describe("Dashboard API", () => {
     ])
     mockExpenseFindMany.mockResolvedValue([])
 
-    const res = await GET()
+    const res = await GET(mockRequest())
     const data = await res.json()
 
     expect(data.profitability[0].propertyName).toBe("High")
@@ -101,7 +109,7 @@ describe("Dashboard API", () => {
     ])
     mockExpenseFindMany.mockResolvedValue([])
 
-    const res = await GET()
+    const res = await GET(mockRequest())
     const data = await res.json()
 
     expect(data.platformData).toHaveLength(2)
@@ -114,7 +122,7 @@ describe("Dashboard API", () => {
     mockPropertyFindMany.mockResolvedValue([])
     mockExpenseFindMany.mockResolvedValue([])
 
-    const res = await GET()
+    const res = await GET(mockRequest())
     const data = await res.json()
 
     expect(data.stats.totalRevenue).toBe(0)
