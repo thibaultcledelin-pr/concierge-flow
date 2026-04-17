@@ -3,8 +3,9 @@
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import { Plus } from "lucide-react"
-import { StatsCards } from "@/components/dashboard/stats-cards"
+import { StatsCards, type KpiKey } from "@/components/dashboard/stats-cards"
 import { OccupancyChart } from "@/components/dashboard/occupancy-chart"
+import { OccupationDonut } from "@/components/dashboard/occupation-donut"
 import { RevenuePerNightChart } from "@/components/dashboard/revenue-per-night-chart"
 import { OccupancyBarChart } from "@/components/dashboard/occupancy-bar-chart"
 import { RevenueChart } from "@/components/dashboard/revenue-chart"
@@ -58,6 +59,7 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
   const [selectedProperty, setSelectedProperty] = useState<string>("all")
+  const [activeCard, setActiveCard] = useState<KpiKey | null>(null)
 
   function loadDashboard(propertyId: string, signal?: AbortSignal) {
     const url = propertyId !== "all"
@@ -166,21 +168,54 @@ export default function DashboardPage() {
         adr={data.stats.adr}
         totalRevenue={data.stats.totalRevenue}
         propertyName={selectedPropertyName}
+        activeCard={activeCard}
+        onCardClick={(key) => setActiveCard(activeCard === key ? null : key)}
       />
 
-      {/* Graphe 1 — Taux d'occupation (pleine largeur) */}
-      <OccupancyChart data={data.occupancyData} />
-
-      {/* Graphes 2 + 3 côte à côte */}
-      <div className="grid gap-6 lg:grid-cols-3">
-        <div className="lg:col-span-2">
-          <RevenuePerNightChart data={data.revenuePerNightData} propertyNames={data.propertyNames} />
+      {/* Graphe contextuel selon KPI sélectionné */}
+      {activeCard === "occupancy" && (
+        <div className="grid gap-6 lg:grid-cols-4">
+          <OccupationDonut rate={data.stats.occupancyRate} />
+          <div className="lg:col-span-3">
+            <OccupancyChart data={data.occupancyData} />
+          </div>
         </div>
-        <OccupancyBarChart data={data.occupancyByProperty} />
-      </div>
+      )}
+      {(activeCard === "revenuePerNight" || activeCard === "adr") && (
+        <RevenuePerNightChart data={data.revenuePerNightData} propertyNames={data.propertyNames} />
+      )}
+      {(activeCard === "margin" || activeCard === "totalRevenue") && (
+        <RevenueChart data={data.chartData} />
+      )}
+      {activeCard === "revpar" && (
+        <div className="grid gap-6 lg:grid-cols-3">
+          <div className="lg:col-span-2">
+            <OccupancyChart data={data.occupancyData} />
+          </div>
+          <OccupancyBarChart data={data.occupancyByProperty} />
+        </div>
+      )}
 
-      {/* Graphe 4 — Revenus vs Dépenses (pleine largeur) */}
-      <RevenueChart data={data.chartData} />
+      {/* Graphes par défaut si aucun KPI sélectionné */}
+      {!activeCard && (
+        <>
+          <div className="grid gap-6 lg:grid-cols-4">
+            <OccupationDonut rate={data.stats.occupancyRate} />
+            <div className="lg:col-span-3">
+              <OccupancyChart data={data.occupancyData} />
+            </div>
+          </div>
+
+          <div className="grid gap-6 lg:grid-cols-3">
+            <div className="lg:col-span-2">
+              <RevenuePerNightChart data={data.revenuePerNightData} propertyNames={data.propertyNames} />
+            </div>
+            <OccupancyBarChart data={data.occupancyByProperty} />
+          </div>
+
+          <RevenueChart data={data.chartData} />
+        </>
+      )}
 
       {/* Table rentabilité */}
       <ProfitabilityTable data={data.profitability} />
