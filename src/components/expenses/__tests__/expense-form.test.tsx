@@ -76,4 +76,23 @@ describe("ExpenseForm", () => {
     expect(screen.getByRole("button", { name: /ajouter/i })).toBeInTheDocument()
     expect(screen.getByRole("button", { name: /annuler/i })).toBeInTheDocument()
   })
+
+  it("uses optional chaining for defaultValues.id", async () => {
+    const { readFileSync } = await import("fs")
+    const source = readFileSync("src/components/expenses/expense-form.tsx", "utf-8")
+    expect(source).not.toContain("defaultValues!.id")
+    expect(source).toContain("defaultValues?.id")
+  })
+
+  it("renders without crashing when defaultValues is undefined", () => {
+    render(
+      <ExpenseForm
+        properties={[]}
+        open={true}
+        onOpenChange={vi.fn()}
+        onSuccess={vi.fn()}
+      />
+    )
+    expect(screen.getByText("Nouvelle dépense")).toBeInTheDocument()
+  })
 })

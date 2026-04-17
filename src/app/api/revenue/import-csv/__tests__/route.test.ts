@@ -161,4 +161,13 @@ describe("POST /api/revenue/import-csv", () => {
     expect(data.created).toBe(0)
     expect(mockBookingUpdate).toHaveBeenCalledOnce()
   })
+
+  it("has try-catch around file.text() and file size check", async () => {
+    const { readFileSync } = await import("fs")
+    const source = readFileSync("src/app/api/revenue/import-csv/route.ts", "utf-8")
+    expect(source).toContain("try {")
+    expect(source).toContain("file.text()")
+    expect(source).toContain("5_000_000")
+    expect(source).toContain("413")
+  })
 })
