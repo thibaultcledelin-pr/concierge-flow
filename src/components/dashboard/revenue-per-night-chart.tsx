@@ -11,6 +11,7 @@ import {
   Legend,
 } from "recharts"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { formatMonth, TOOLTIP_STYLE } from "@/lib/chart-utils"
 
 interface RevenuePerNightDataPoint {
   month: string
@@ -23,12 +24,6 @@ interface RevenuePerNightChartProps {
 }
 
 const COLORS = ["#7c3aed", "#3b82f6", "#f97316", "#ef4444", "#22c55e", "#eab308"]
-const MONTHS_FR = ["Jan", "Fév", "Mar", "Avr", "Mai", "Jun", "Jul", "Aoû", "Sep", "Oct", "Nov", "Déc"]
-
-function formatMonth(month: string) {
-  const [year, m] = month.split("-")
-  return `${MONTHS_FR[parseInt(m) - 1]} ${year.slice(2)}`
-}
 
 export function RevenuePerNightChart({ data, propertyNames }: RevenuePerNightChartProps) {
   if (data.length === 0 || propertyNames.length === 0) {
@@ -78,14 +73,7 @@ export function RevenuePerNightChart({ data, propertyNames }: RevenuePerNightCha
             />
             <Tooltip
               cursor={{ stroke: "rgba(255,255,255,0.1)", strokeWidth: 1 }}
-              contentStyle={{
-                backgroundColor: "rgba(15,15,15,0.95)",
-                border: "1px solid rgba(255,255,255,0.1)",
-                borderRadius: "10px",
-                padding: "12px",
-                color: "#e5e5e5",
-                fontSize: "13px",
-              }}
+              contentStyle={TOOLTIP_STYLE}
               formatter={(value: number | string, name: number | string) => [`${Number(value).toFixed(0)}€/nuit`, String(name)]}
               labelFormatter={(label: number | string) => formatMonth(String(label))}
             />

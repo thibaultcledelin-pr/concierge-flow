@@ -12,6 +12,7 @@ import {
   LabelList,
 } from "recharts"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { TOOLTIP_STYLE } from "@/lib/chart-utils"
 
 interface OccupancyBarData {
   name: string
@@ -71,14 +72,7 @@ export function OccupancyBarChart({ data }: OccupancyBarChartProps) {
             />
             <Tooltip
               cursor={{ fill: "rgba(255,255,255,0.04)" }}
-              contentStyle={{
-                backgroundColor: "rgba(15,15,15,0.95)",
-                border: "1px solid rgba(255,255,255,0.1)",
-                borderRadius: "10px",
-                padding: "12px",
-                color: "#e5e5e5",
-                fontSize: "13px",
-              }}
+              contentStyle={TOOLTIP_STYLE}
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
               formatter={(value: any) => [`${Number(value).toFixed(1)}%`, "Occupation"]}
             />

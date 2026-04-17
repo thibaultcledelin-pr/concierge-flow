@@ -10,6 +10,7 @@ import {
   Tooltip,
 } from "recharts"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { formatMonth, TOOLTIP_STYLE } from "@/lib/chart-utils"
 
 interface OccupancyDataPoint {
   month: string
@@ -18,13 +19,6 @@ interface OccupancyDataPoint {
 
 interface OccupancyChartProps {
   data: OccupancyDataPoint[]
-}
-
-const MONTHS_FR = ["Jan", "Fév", "Mar", "Avr", "Mai", "Jun", "Jul", "Aoû", "Sep", "Oct", "Nov", "Déc"]
-
-function formatMonth(month: string) {
-  const [year, m] = month.split("-")
-  return `${MONTHS_FR[parseInt(m) - 1]} ${year.slice(2)}`
 }
 
 export function OccupancyChart({ data }: OccupancyChartProps) {
@@ -74,14 +68,7 @@ export function OccupancyChart({ data }: OccupancyChartProps) {
             />
             <Tooltip
               cursor={{ stroke: "rgba(255,255,255,0.1)", strokeWidth: 1 }}
-              contentStyle={{
-                backgroundColor: "rgba(15,15,15,0.95)",
-                border: "1px solid rgba(255,255,255,0.1)",
-                borderRadius: "10px",
-                padding: "12px",
-                color: "#e5e5e5",
-                fontSize: "13px",
-              }}
+              contentStyle={TOOLTIP_STYLE}
               formatter={(value: number | string) => [`${Number(value).toFixed(1)}%`, "Occupation"]}
               labelFormatter={(label: number | string) => formatMonth(String(label))}
             />
