@@ -9,6 +9,7 @@ import {
   CartesianGrid,
   Tooltip,
   Cell,
+  LabelList,
 } from "recharts"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
@@ -69,17 +70,28 @@ export function OccupancyBarChart({ data }: OccupancyBarChartProps) {
               width={120}
             />
             <Tooltip
+              cursor={{ fill: "rgba(255,255,255,0.04)" }}
               contentStyle={{
                 backgroundColor: "rgba(15,15,15,0.95)",
                 border: "1px solid rgba(255,255,255,0.1)",
                 borderRadius: "10px",
                 padding: "12px",
-                backgroundColor: "rgba(15,15,15,0.95)", color: "#e5e5e5", fontSize: "13px",
+                color: "#e5e5e5",
+                fontSize: "13px",
               }}
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
               formatter={(value: any) => [`${Number(value).toFixed(1)}%`, "Occupation"]}
             />
             <Bar dataKey="occupancy" radius={[0, 6, 6, 0]} animationDuration={1400} animationEasing="ease-out">
+              <LabelList
+                dataKey="occupancy"
+                position="right"
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                formatter={(v: any) => `${Number(v).toFixed(1)}%`}
+                fill="rgba(255,255,255,0.85)"
+                fontSize={12}
+                fontWeight={600}
+              />
               {data.map((entry) => (
                 <Cell key={entry.name} fill={getBarColor(entry.occupancy)} />
               ))}
