@@ -44,3 +44,8 @@ export function calculateRevPAR(totalRevenue: number, availableNights: number): 
   if (availableNights === 0) return 0
   return totalRevenue / availableNights
 }
+
+export function calculateADR(totalRevenue: number, occupiedNights: number): number {
+  if (occupiedNights === 0) return 0
+  return totalRevenue / occupiedNights
+}
