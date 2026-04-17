@@ -26,12 +26,12 @@ export function Sidebar() {
 
   return (
     <aside className="hidden w-60 shrink-0 border-r border-border bg-card lg:block">
-      <div className="flex h-14 items-center gap-2 border-b border-border px-4">
+      <Link href="/dashboard" className="flex h-14 items-center gap-2 border-b border-border px-4 transition-opacity hover:opacity-80">
         <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-violet-600 text-xs font-bold text-white">
           C
         </div>
         <span className="text-sm font-bold tracking-tight">ConciergeFlow</span>
-      </div>
+      </Link>
       <nav className="flex flex-col gap-1 p-3">
         {navItems.map((item) => {
           const isActive =
