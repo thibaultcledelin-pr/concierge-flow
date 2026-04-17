@@ -9,6 +9,7 @@ import {
   Legend,
 } from "recharts"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { TOOLTIP_STYLE } from "@/lib/chart-utils"
 
 interface PlatformData {
   name: string
@@ -68,12 +69,7 @@ export function PlatformChart({ data }: PlatformChartProps) {
               ))}
             </Pie>
             <Tooltip
-              contentStyle={{
-                backgroundColor: "hsl(var(--card))",
-                border: "1px solid hsl(var(--border))",
-                borderRadius: "8px",
-                fontSize: "12px",
-              }}
+              contentStyle={TOOLTIP_STYLE}
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
               formatter={(value: any) => [`${Number(value).toFixed(0)}€`, "Revenus"]}
             />

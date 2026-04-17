@@ -72,7 +72,7 @@ export default function PropertiesPage() {
     if (!confirm("Supprimer ce logement ?")) return
     const res = await fetch(`/api/properties/${id}`, { method: "DELETE" })
     if (res.ok) {
-      setProperties((prev) => prev.filter((p) => p.id !== id))
+      setProperties((prev) => prev.filter((property) => property.id !== id))
       toast({ title: "Logement supprim\u00e9", description: name })
     } else {
       toast({ title: "Erreur", description: "Impossible de supprimer", variant: "destructive" })

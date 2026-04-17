@@ -2,6 +2,8 @@ import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { createClient } from "@/lib/supabase/server"
 
+// --- Types partagés pour le dashboard ---
+
 interface BookingRecord {
   totalAmount: number
   nights: number
@@ -22,10 +24,150 @@ interface PropertyWithRelations {
   expenses: ExpenseRecord[]
 }
 
-interface ProfitabilityEntry {
-  margin: number
-  occupancy: number
+// Arrondi à 1 décimale (ex: 82.5)
+function round1(value: number): number {
+  return Math.round(value * 10) / 10
 }
+
+// Nombre de jours dans le mois courant
+function daysInCurrentMonth(): number {
+  const now = new Date()
+  return new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate()
+}
+
+// Nombre de jours dans un mois donné (ex: "2026-04" → 30)
+function daysInMonth(monthKey: string): number {
+  const year = parseInt(monthKey.slice(0, 4))
+  const month = parseInt(monthKey.slice(5, 7))
+  return new Date(year, month, 0).getDate()
+}
+
+// Extrait "2026-04" d'une date
+function toMonthKey(date: Date): string {
+  return new Date(date).toISOString().slice(0, 7)
+}
+
+// --- Calcul de la rentabilité par logement ---
+
+function computePropertyProfitability(property: PropertyWithRelations) {
+  const revenue = property.bookings.reduce((sum, booking) => sum + booking.totalAmount, 0)
+  const nights = property.bookings.reduce((sum, booking) => sum + booking.nights, 0)
+  const expenses = property.expenses.reduce((sum, expense) => sum + expense.amount, 0)
+  const profit = revenue - expenses
+  const margin = revenue > 0 ? (profit / revenue) * 100 : 0
+  const daysAvailable = daysInCurrentMonth()
+
+  return {
+    propertyId: property.id,
+    propertyName: property.name,
+    city: property.city,
+    revenue,
+    expenses,
+    profit,
+    margin: round1(margin),
+    nights,
+    bookings: property.bookings.length,
+    occupancy: daysAvailable > 0 ? round1((nights / daysAvailable) * 100) : 0,
+    revenuePerNight: nights > 0 ? round1(profit / nights) : 0,
+  }
+}
+
+// --- Agrégation mensuelle pour les graphiques ---
+
+interface MonthlyAggregation {
+  revenue: Record<string, number>
+  expenses: Record<string, number>
+  nights: Record<string, number>
+  propertyNights: Record<string, Record<string, number>>
+  propertyRevenue: Record<string, Record<string, number>>
+  propertyExpenses: Record<string, Record<string, number>>
+}
+
+function aggregateMonthlyData(
+  properties: PropertyWithRelations[],
+  globalExpenses: ExpenseRecord[],
+): MonthlyAggregation {
+  const agg: MonthlyAggregation = {
+    revenue: {}, expenses: {}, nights: {},
+    propertyNights: {}, propertyRevenue: {}, propertyExpenses: {},
+  }
+
+  for (const property of properties) {
+    for (const booking of property.bookings) {
+      const month = toMonthKey(booking.checkIn)
+      agg.revenue[month] = (agg.revenue[month] || 0) + booking.totalAmount
+      agg.nights[month] = (agg.nights[month] || 0) + booking.nights
+
+      if (!agg.propertyNights[month]) agg.propertyNights[month] = {}
+      agg.propertyNights[month][property.name] = (agg.propertyNights[month][property.name] || 0) + booking.nights
+
+      if (!agg.propertyRevenue[month]) agg.propertyRevenue[month] = {}
+      agg.propertyRevenue[month][property.name] = (agg.propertyRevenue[month][property.name] || 0) + booking.totalAmount
+    }
+
+    for (const expense of property.expenses) {
+      const month = toMonthKey(expense.date)
+      agg.expenses[month] = (agg.expenses[month] || 0) + expense.amount
+
+      if (!agg.propertyExpenses[month]) agg.propertyExpenses[month] = {}
+      agg.propertyExpenses[month][property.name] = (agg.propertyExpenses[month][property.name] || 0) + expense.amount
+    }
+  }
+
+  // Dépenses globales (non rattachées à un logement)
+  for (const expense of globalExpenses) {
+    const month = toMonthKey(expense.date)
+    agg.expenses[month] = (agg.expenses[month] || 0) + expense.amount
+  }
+
+  return agg
+}
+
+// --- Construction des données pour les graphiques ---
+
+function buildChartData(agg: MonthlyAggregation, properties: PropertyWithRelations[]) {
+  const allMonths = [...new Set([
+    ...Object.keys(agg.revenue),
+    ...Object.keys(agg.expenses),
+  ])].sort()
+
+  const monthRegex = /^\d{4}-\d{2}$/
+
+  // Revenus vs Dépenses vs Marge par mois
+  const revenueVsExpenses = allMonths.map((month) => ({
+    month,
+    revenue: agg.revenue[month] || 0,
+    expenses: agg.expenses[month] || 0,
+    profit: (agg.revenue[month] || 0) - (agg.expenses[month] || 0),
+  }))
+
+  // Taux d'occupation global par mois
+  const occupancyTimeline = allMonths.filter((m) => monthRegex.test(m)).map((month) => {
+    const nights = agg.nights[month] || 0
+    const totalAvailable = daysInMonth(month) * properties.length
+    return {
+      month,
+      occupancy: totalAvailable > 0 ? round1((nights / totalAvailable) * 100) : 0,
+    }
+  })
+
+  // Revenu net par nuitée par logement (6 derniers mois)
+  const propertyNames = properties.map((property) => property.name)
+  const revenuePerNight = allMonths.slice(-6).map((month) => {
+    const point: Record<string, string | number> = { month }
+    for (const name of propertyNames) {
+      const rev = agg.propertyRevenue[month]?.[name] || 0
+      const exp = agg.propertyExpenses[month]?.[name] || 0
+      const nights = agg.propertyNights[month]?.[name] || 0
+      point[name] = nights > 0 ? round1((rev - exp) / nights) : 0
+    }
+    return point
+  })
+
+  return { revenueVsExpenses, occupancyTimeline, revenuePerNight, propertyNames }
+}
+
+// --- Route API ---
 
 export async function GET(request: Request) {
   const supabase = await createClient()
@@ -38,185 +180,73 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
   const propertyId = searchParams.get("propertyId")
 
+  // Liste complète des logements (pour le sélecteur)
   const allProperties = await prisma.property.findMany({
     where: { userId: user.id },
     select: { id: true, name: true },
     orderBy: { name: "asc" },
   })
 
-  const propertyFilter = propertyId
-    ? { userId: user.id, id: propertyId }
-    : { userId: user.id }
-
+  // Logements filtrés (un seul si propertyId, tous sinon)
   const properties = await prisma.property.findMany({
-    where: propertyFilter,
-    include: {
-      bookings: true,
-      expenses: true,
-    },
-  })
+    where: propertyId ? { userId: user.id, id: propertyId } : { userId: user.id },
+    include: { bookings: true, expenses: true },
+  }) as PropertyWithRelations[]
 
+  // Dépenses globales (exclues en vue mono-logement)
   const globalExpenses = propertyId
     ? []
-    : await prisma.expense.findMany({
-        where: { userId: user.id, propertyId: null },
-      })
+    : await prisma.expense.findMany({ where: { userId: user.id, propertyId: null } }) as ExpenseRecord[]
 
-  let totalRevenue = 0
-  let totalExpenses = 0
-  let totalNights = 0
-  let totalDaysAvailable = 0
-  const platformRevenue: Record<string, number> = {}
+  // Rentabilité par logement
+  const profitability = properties.map(computePropertyProfitability)
 
-  const profitability = properties.map((property: PropertyWithRelations) => {
-    const revenue = property.bookings.reduce((sum: number, b: BookingRecord) => sum + b.totalAmount, 0)
-    const nights = property.bookings.reduce((sum: number, b: BookingRecord) => sum + b.nights, 0)
-    const expenses = property.expenses.reduce((sum: number, e: ExpenseRecord) => sum + e.amount, 0)
-    const profit = revenue - expenses
-    const margin = revenue > 0 ? (profit / revenue) * 100 : 0
-
-    totalRevenue += revenue
-    totalExpenses += expenses
-    totalNights += nights
-    const now = new Date()
-    const daysThisMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate()
-    totalDaysAvailable += daysThisMonth
-
-    for (const booking of property.bookings) {
-      const platform = booking.platform
-      platformRevenue[platform] = (platformRevenue[platform] || 0) + booking.totalAmount
-    }
-
-    return {
-      propertyId: property.id,
-      propertyName: property.name,
-      city: property.city,
-      revenue,
-      expenses,
-      profit,
-      margin: Math.round(margin * 10) / 10,
-      nights,
-      bookings: property.bookings.length,
-      occupancy: daysThisMonth > 0 ? Math.round((nights / daysThisMonth) * 1000) / 10 : 0,
-      revenuePerNight: nights > 0 ? Math.round(((revenue - expenses) / nights) * 10) / 10 : 0,
-    }
-  })
-
-  const globalExpenseTotal = globalExpenses.reduce((sum: number, e: { amount: number }) => sum + e.amount, 0)
-  totalExpenses += globalExpenseTotal
-
+  // KPIs globaux
+  const totalRevenue = profitability.reduce((sum, p) => sum + p.revenue, 0)
+  const propertyExpenses = profitability.reduce((sum, p) => sum + p.expenses, 0)
+  const globalExpenseTotal = globalExpenses.reduce((sum, expense) => sum + expense.amount, 0)
+  const totalExpenses = propertyExpenses + globalExpenseTotal
+  const totalNights = profitability.reduce((sum, p) => sum + p.nights, 0)
+  const totalDaysAvailable = daysInCurrentMonth() * properties.length
   const totalProfit = totalRevenue - totalExpenses
-  const totalMargin = totalRevenue > 0
-    ? Math.round(((totalProfit) / totalRevenue) * 1000) / 10
-    : 0
-  const occupancyRate = totalDaysAvailable > 0
-    ? Math.round((totalNights / totalDaysAvailable) * 1000) / 10
-    : 0
-  const avgRevenuePerNight = totalNights > 0
-    ? Math.round((totalProfit / totalNights) * 10) / 10
-    : 0
-  const revPAR = totalDaysAvailable > 0
-    ? Math.round((totalRevenue / totalDaysAvailable) * 10) / 10
-    : 0
-  const adr = totalNights > 0
-    ? Math.round((totalRevenue / totalNights) * 10) / 10
-    : 0
 
-  // Monthly data for charts
-  const monthlyRevenue: Record<string, number> = {}
-  const monthlyExpenses: Record<string, number> = {}
-  const monthlyNights: Record<string, number> = {}
-  const monthlyPropertyNights: Record<string, Record<string, number>> = {}
-  const monthlyPropertyRevenue: Record<string, Record<string, number>> = {}
-  const monthlyPropertyExpenses: Record<string, Record<string, number>> = {}
+  const stats = {
+    totalRevenue,
+    totalExpenses,
+    totalProfit,
+    totalMargin: totalRevenue > 0 ? round1((totalProfit / totalRevenue) * 100) : 0,
+    occupancyRate: totalDaysAvailable > 0 ? round1((totalNights / totalDaysAvailable) * 100) : 0,
+    avgRevenuePerNight: totalNights > 0 ? round1(totalProfit / totalNights) : 0,
+    revPAR: totalDaysAvailable > 0 ? round1(totalRevenue / totalDaysAvailable) : 0,
+    adr: totalNights > 0 ? round1(totalRevenue / totalNights) : 0,
+    propertyCount: properties.length,
+  }
 
+  // Répartition par plateforme (Airbnb, Booking, etc.)
+  const platformRevenue: Record<string, number> = {}
   for (const property of properties) {
-    for (const booking of (property as PropertyWithRelations).bookings) {
-      const month = new Date(booking.checkIn).toISOString().slice(0, 7)
-      monthlyRevenue[month] = (monthlyRevenue[month] || 0) + booking.totalAmount
-      monthlyNights[month] = (monthlyNights[month] || 0) + booking.nights
-
-      if (!monthlyPropertyNights[month]) monthlyPropertyNights[month] = {}
-      monthlyPropertyNights[month][property.name] = (monthlyPropertyNights[month][property.name] || 0) + booking.nights
-
-      if (!monthlyPropertyRevenue[month]) monthlyPropertyRevenue[month] = {}
-      monthlyPropertyRevenue[month][property.name] = (monthlyPropertyRevenue[month][property.name] || 0) + booking.totalAmount
-    }
-    for (const expense of (property as PropertyWithRelations).expenses) {
-      const month = new Date(expense.date).toISOString().slice(0, 7)
-      monthlyExpenses[month] = (monthlyExpenses[month] || 0) + expense.amount
-
-      if (!monthlyPropertyExpenses[month]) monthlyPropertyExpenses[month] = {}
-      monthlyPropertyExpenses[month][property.name] = (monthlyPropertyExpenses[month][property.name] || 0) + expense.amount
+    for (const booking of property.bookings) {
+      platformRevenue[booking.platform] = (platformRevenue[booking.platform] || 0) + booking.totalAmount
     }
   }
-  for (const expense of globalExpenses) {
-    const month = new Date(expense.date).toISOString().slice(0, 7)
-    monthlyExpenses[month] = (monthlyExpenses[month] || 0) + expense.amount
-  }
+  const platformData = Object.entries(platformRevenue).map(([name, value]) => ({ name, value }))
 
-  const allMonths = [...new Set([...Object.keys(monthlyRevenue), ...Object.keys(monthlyExpenses)])].sort()
+  // Données mensuelles pour les graphiques
+  const monthly = aggregateMonthlyData(properties, globalExpenses)
+  const charts = buildChartData(monthly, properties)
 
-  const chartData = allMonths.map((month) => ({
-    month,
-    revenue: monthlyRevenue[month] || 0,
-    expenses: monthlyExpenses[month] || 0,
-    profit: (monthlyRevenue[month] || 0) - (monthlyExpenses[month] || 0),
-  }))
-
-  // Occupancy timeline
-  const monthRegex = /^\d{4}-\d{2}$/
-  const occupancyData = allMonths.filter((m) => monthRegex.test(m)).map((month) => {
-    const daysInMonth = new Date(parseInt(month.slice(0, 4)), parseInt(month.slice(5, 7)), 0).getDate()
-    const nights = monthlyNights[month] || 0
-    const totalAvailable = daysInMonth * properties.length
-    return {
-      month,
-      occupancy: totalAvailable > 0 ? Math.round((nights / totalAvailable) * 1000) / 10 : 0,
-    }
-  })
-
-  // Revenue per night per property
-  const propertyNames = properties.map((p: PropertyWithRelations) => p.name)
-  const revenuePerNightData = allMonths.slice(-6).map((month) => {
-    const point: Record<string, string | number> = { month }
-    for (const name of propertyNames) {
-      const rev = monthlyPropertyRevenue[month]?.[name] || 0
-      const exp = monthlyPropertyExpenses[month]?.[name] || 0
-      const nights = monthlyPropertyNights[month]?.[name] || 0
-      point[name] = nights > 0 ? Math.round(((rev - exp) / nights) * 10) / 10 : 0
-    }
-    return point
-  })
-
-  // Occupancy per property (bar chart)
-  const occupancyByProperty = profitability.map((p: { propertyName: string; occupancy: number }) => ({
-    name: p.propertyName,
-    occupancy: p.occupancy,
-  })).sort((a: ProfitabilityEntry, b: ProfitabilityEntry) => b.occupancy - a.occupancy)
-
-  const platformData = Object.entries(platformRevenue).map(([name, value]) => ({
-    name,
-    value,
-  }))
+  // Occupation par logement (triée par taux décroissant)
+  const occupancyByProperty = profitability
+    .map((p) => ({ name: p.propertyName, occupancy: p.occupancy }))
+    .sort((a, b) => b.occupancy - a.occupancy)
 
   return NextResponse.json({
-    stats: {
-      totalRevenue,
-      totalExpenses,
-      totalProfit,
-      totalMargin,
-      occupancyRate,
-      avgRevenuePerNight,
-      revPAR,
-      adr,
-      propertyCount: properties.length,
-    },
-    profitability: profitability.sort((a: ProfitabilityEntry, b: ProfitabilityEntry) => b.margin - a.margin),
-    chartData,
-    occupancyData,
-    revenuePerNightData,
-    propertyNames,
+    stats,
+    profitability: profitability.sort((a, b) => b.margin - a.margin),
+    chartData: charts.revenueVsExpenses,
+    occupancyData: charts.occupancyTimeline,
+    revenuePerNightData: charts.revenuePerNight,
+    propertyNames: charts.propertyNames,
     occupancyByProperty,
     platformData,
     allProperties,
