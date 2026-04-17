@@ -45,8 +45,9 @@ export function RevenuePerNightChart({ data, propertyNames }: RevenuePerNightCha
         <CardTitle className="text-base">Revenu net / nuitée</CardTitle>
       </CardHeader>
       <CardContent>
-        <ResponsiveContainer width="100%" height={280}>
-          <AreaChart data={data}>
+        <div style={{ outline: "none" }} tabIndex={-1}>
+          <ResponsiveContainer width="100%" height={280}>
+            <AreaChart data={data}>
             <defs>
               {propertyNames.map((name, i) => (
                 <linearGradient key={name} id={`rpnGrad${i}`} x1="0" y1="0" x2="0" y2="1">
@@ -92,8 +93,9 @@ export function RevenuePerNightChart({ data, propertyNames }: RevenuePerNightCha
                 animationEasing="ease-out"
               />
             ))}
-          </AreaChart>
-        </ResponsiveContainer>
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
       </CardContent>
     </Card>
   )

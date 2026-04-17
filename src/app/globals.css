@@ -127,10 +127,9 @@
 }
 
 /* Hors @layer pour priorité maximale sur Recharts */
-.recharts-wrapper:focus,
-.recharts-wrapper:focus-visible,
-.recharts-surface:focus,
-.recharts-surface:focus-visible {
+.recharts-wrapper,
+.recharts-wrapper *,
+.recharts-surface {
   outline: none !important;
   box-shadow: none !important;
 }

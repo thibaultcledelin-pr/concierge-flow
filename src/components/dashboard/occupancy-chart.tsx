@@ -41,7 +41,8 @@ export function OccupancyChart({ data }: OccupancyChartProps) {
         <CardTitle className="text-base">Taux d&apos;occupation</CardTitle>
       </CardHeader>
       <CardContent>
-        <ResponsiveContainer width="100%" height={280}>
+        <div style={{ outline: "none" }} tabIndex={-1}>
+          <ResponsiveContainer width="100%" height={280}>
           <AreaChart data={data}>
             <defs>
               <linearGradient id="occupancyGrad" x1="0" y1="0" x2="0" y2="1">
@@ -85,6 +86,7 @@ export function OccupancyChart({ data }: OccupancyChartProps) {
             />
           </AreaChart>
         </ResponsiveContainer>
+        </div>
       </CardContent>
     </Card>
   )
