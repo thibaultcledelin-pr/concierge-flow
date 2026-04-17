@@ -119,4 +119,40 @@ describe("POST /api/properties/[id]/sync-ical", () => {
     expect(data.created).toBe(0)
     expect(data.skipped).toBe(1)
   })
+
+  it("logs error to console.error and returns generic message", async () => {
+    mockGetUser.mockResolvedValue({ data: { user: { id: "user-1" } } })
+    mockFindFirst.mockResolvedValue({
+      id: "p1", userId: "user-1",
+      icalUrl: "https://airbnb.com/cal.ics", icalUrlBooking: null,
+    })
+    mockFetch.mockRejectedValue(new Error("Network failure"))
+    const spy = vi.spyOn(console, "error").mockImplementation(() => {})
+
+    const req = new Request("http://localhost/api/properties/p1/sync-ical", { method: "POST" })
+    const res = await POST(req, { params: Promise.resolve({ id: "p1" }) })
+    const data = await res.json()
+
+    expect(spy).toHaveBeenCalled()
+    expect(data.errors[0]).toBe("Error processing AIRBNB iCal")
+    spy.mockRestore()
+  })
+
+  it("handles fetch timeout gracefully", async () => {
+    mockGetUser.mockResolvedValue({ data: { user: { id: "user-1" } } })
+    mockFindFirst.mockResolvedValue({
+      id: "p1", userId: "user-1",
+      icalUrl: "https://airbnb.com/cal.ics", icalUrlBooking: null,
+    })
+    mockFetch.mockRejectedValue(new DOMException("The operation was aborted", "AbortError"))
+    vi.spyOn(console, "error").mockImplementation(() => {})
+
+    const req = new Request("http://localhost/api/properties/p1/sync-ical", { method: "POST" })
+    const res = await POST(req, { params: Promise.resolve({ id: "p1" }) })
+    const data = await res.json()
+
+    expect(res.status).toBe(200)
+    expect(data.errors).toHaveLength(1)
+    expect(data.created).toBe(0)
+  })
 })
