@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import { Plus } from "lucide-react"
-import { StatsCards, type KpiKey } from "@/components/dashboard/stats-cards"
+import { StatsCards, type KpiKey, type StatsComparison } from "@/components/dashboard/stats-cards"
 import { OccupancyChart } from "@/components/dashboard/occupancy-chart"
 import { OccupationDonut } from "@/components/dashboard/occupation-donut"
 import { RevenuePerNightChart } from "@/components/dashboard/revenue-per-night-chart"
@@ -52,6 +52,7 @@ interface DashboardData {
   occupancyByProperty: { name: string; occupancy: number }[]
   platformData: { name: string; value: number }[]
   allProperties: { id: string; name: string }[]
+  comparison?: StatsComparison
 }
 
 export default function DashboardPage() {
@@ -170,6 +171,7 @@ export default function DashboardPage() {
         propertyName={selectedPropertyName}
         activeCard={activeCard}
         onCardClick={(key) => setActiveCard(activeCard === key ? null : key)}
+        comparison={data.comparison}
       />
 
       {/* Graphe contextuel selon KPI sélectionné */}
