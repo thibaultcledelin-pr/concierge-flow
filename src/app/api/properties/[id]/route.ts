@@ -68,6 +68,8 @@ export async function PUT(
       ...result.data,
       icalUrl: result.data.icalUrl || null,
       icalUrlBooking: result.data.icalUrlBooking || null,
+      ownerName: result.data.ownerName || null,
+      ownerEmail: result.data.ownerEmail || null,
     },
   })
 
