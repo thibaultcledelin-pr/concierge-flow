@@ -47,6 +47,12 @@ function toMonthKey(date: Date): string {
   return new Date(date).toISOString().slice(0, 7)
 }
 
+// Mois courant au format "2026-04"
+function currentMonthKey(): string {
+  const now = new Date()
+  return `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, "0")}`
+}
+
 // --- Calcul de la rentabilité par logement ---
 
 function computePropertyProfitability(property: PropertyWithRelations) {
@@ -55,7 +61,16 @@ function computePropertyProfitability(property: PropertyWithRelations) {
   const expenses = property.expenses.reduce((sum, expense) => sum + expense.amount, 0)
   const profit = revenue - expenses
   const margin = revenue > 0 ? (profit / revenue) * 100 : 0
+
+  // Occupation : nuits du mois en cours / jours du mois
+  const thisMonth = currentMonthKey()
+  const nightsThisMonth = property.bookings
+    .filter((booking) => toMonthKey(booking.checkIn) === thisMonth)
+    .reduce((sum, booking) => sum + booking.nights, 0)
   const daysAvailable = daysInCurrentMonth()
+  const occupancy = daysAvailable > 0
+    ? round1(Math.min(100, (nightsThisMonth / daysAvailable) * 100))
+    : 0
 
   return {
     propertyId: property.id,
@@ -66,8 +81,9 @@ function computePropertyProfitability(property: PropertyWithRelations) {
     profit,
     margin: round1(margin),
     nights,
+    nightsThisMonth,
     bookings: property.bookings.length,
-    occupancy: daysAvailable > 0 ? round1((nights / daysAvailable) * 100) : 0,
+    occupancy,
     revenuePerNight: nights > 0 ? round1(profit / nights) : 0,
   }
 }
@@ -147,7 +163,7 @@ function buildChartData(agg: MonthlyAggregation, properties: PropertyWithRelatio
     const totalAvailable = daysInMonth(month) * properties.length
     return {
       month,
-      occupancy: totalAvailable > 0 ? round1((nights / totalAvailable) * 100) : 0,
+      occupancy: totalAvailable > 0 ? round1(Math.min(100, (nights / totalAvailable) * 100)) : 0,
     }
   })
 
@@ -207,6 +223,7 @@ export async function GET(request: Request) {
   const globalExpenseTotal = globalExpenses.reduce((sum, expense) => sum + expense.amount, 0)
   const totalExpenses = propertyExpenses + globalExpenseTotal
   const totalNights = profitability.reduce((sum, p) => sum + p.nights, 0)
+  const totalNightsThisMonth = profitability.reduce((sum, p) => sum + p.nightsThisMonth, 0)
   const totalDaysAvailable = daysInCurrentMonth() * properties.length
   const totalProfit = totalRevenue - totalExpenses
 
@@ -215,7 +232,9 @@ export async function GET(request: Request) {
     totalExpenses,
     totalProfit,
     totalMargin: totalRevenue > 0 ? round1((totalProfit / totalRevenue) * 100) : 0,
-    occupancyRate: totalDaysAvailable > 0 ? round1((totalNights / totalDaysAvailable) * 100) : 0,
+    occupancyRate: totalDaysAvailable > 0
+      ? round1(Math.min(100, (totalNightsThisMonth / totalDaysAvailable) * 100))
+      : 0,
     avgRevenuePerNight: totalNights > 0 ? round1(totalProfit / totalNights) : 0,
     revPAR: totalDaysAvailable > 0 ? round1(totalRevenue / totalDaysAvailable) : 0,
     adr: totalNights > 0 ? round1(totalRevenue / totalNights) : 0,
