@@ -32,7 +32,11 @@ function generateAlerts(properties: PropertyData[]): Alert[] {
     const nights = property.bookings.reduce((s, b) => s + b.nights, 0)
     const profit = revenue - expenses
     const margin = revenue > 0 ? (profit / revenue) * 100 : 0
-    const occupancy = daysThisMonth > 0 ? (nights / daysThisMonth) * 100 : 0
+    const thisMonthKey = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, "0")}`
+    const nightsThisMonth = property.bookings
+      .filter((b) => new Date(b.checkIn).toISOString().slice(0, 7) === thisMonthKey)
+      .reduce((s, b) => s + b.nights, 0)
+    const occupancy = daysThisMonth > 0 ? Math.min(100, (nightsThisMonth / daysThisMonth) * 100) : 0
 
     // Marge négative = le logement perd de l'argent
     if (profit < 0) {
