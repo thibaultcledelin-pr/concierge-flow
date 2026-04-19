@@ -1,12 +1,23 @@
 "use client"
 
-import { Calendar, DollarSign, Percent, TrendingUp, Tag, BarChart3 } from "lucide-react"
+import { Calendar, DollarSign, Percent, TrendingUp, Tag, BarChart3, ArrowUp, ArrowDown, Minus } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { InfoTooltip } from "@/components/ui/info-tooltip"
 import { formatCurrency } from "@/lib/utils"
 import { cn } from "@/lib/utils"
 
 export type KpiKey = "occupancy" | "revenuePerNight" | "margin" | "totalRevenue" | "revpar" | "adr"
+
+export interface StatsComparison {
+  totalRevenue: number | null
+  totalExpenses: number | null
+  totalProfit: number | null
+  totalMargin: number | null
+  occupancyRate: number | null
+  avgRevenuePerNight: number | null
+  revPAR: number | null
+  adr: number | null
+}
 
 interface StatsCardsProps {
   occupancyRate: number
@@ -18,12 +29,47 @@ interface StatsCardsProps {
   propertyName?: string
   activeCard?: KpiKey | null
   onCardClick?: (key: KpiKey) => void
+  comparison?: StatsComparison
 }
 
-export function StatsCards({ occupancyRate, avgRevenuePerNight, totalMargin, revPAR, adr, totalRevenue, propertyName, activeCard, onCardClick }: StatsCardsProps) {
+// Petit badge "+15%" / "-8%" avec flèche
+function VariationBadge({ value, invertColor = false }: { value: number | null; invertColor?: boolean }) {
+  if (value === null) {
+    return (
+      <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+        <Minus className="h-3 w-3" />
+        —
+      </span>
+    )
+  }
+
+  // Pour les dépenses : augmenter est mauvais (invertColor=true)
+  const isPositive = invertColor ? value < 0 : value > 0
+  const isNegative = invertColor ? value > 0 : value < 0
+  const isZero = value === 0
+
+  const color = isZero
+    ? "text-muted-foreground"
+    : isPositive
+      ? "text-green-400"
+      : isNegative
+        ? "text-red-400"
+        : "text-muted-foreground"
+
+  const Icon = isZero ? Minus : value > 0 ? ArrowUp : ArrowDown
+
+  return (
+    <span className={cn("inline-flex items-center gap-0.5 text-xs font-medium", color)}>
+      <Icon className="h-3 w-3" />
+      {Math.abs(value)}%
+    </span>
+  )
+}
+
+export function StatsCards({ occupancyRate, avgRevenuePerNight, totalMargin, revPAR, adr, totalRevenue, propertyName, activeCard, onCardClick, comparison }: StatsCardsProps) {
   const scope = propertyName ? `pour ${propertyName}` : "sur l'ensemble de vos logements"
 
-  const cards: { key: KpiKey; label: string; value: string; icon: typeof Calendar; color: string; info: string }[] = [
+  const cards: { key: KpiKey; label: string; value: string; icon: typeof Calendar; color: string; info: string; variation: number | null }[] = [
     {
       key: "occupancy",
       label: "Occupation moyenne",
@@ -31,6 +77,7 @@ export function StatsCards({ occupancyRate, avgRevenuePerNight, totalMargin, rev
       icon: Calendar,
       color: "text-violet-400",
       info: `${occupancyRate}% des nuits disponibles ont été louées ${scope} ce mois-ci. Au-dessus de 70% c'est excellent.`,
+      variation: comparison?.occupancyRate ?? null,
     },
     {
       key: "revenuePerNight",
@@ -39,6 +86,7 @@ export function StatsCards({ occupancyRate, avgRevenuePerNight, totalMargin, rev
       icon: DollarSign,
       color: "text-green-400",
       info: `Chaque nuit louée rapporte en moyenne ${formatCurrency(avgRevenuePerNight)} net (après dépenses) ${scope}.`,
+      variation: comparison?.avgRevenuePerNight ?? null,
     },
     {
       key: "margin",
@@ -47,6 +95,7 @@ export function StatsCards({ occupancyRate, avgRevenuePerNight, totalMargin, rev
       icon: Percent,
       color: totalMargin >= 30 ? "text-green-400" : totalMargin >= 10 ? "text-yellow-400" : "text-red-400",
       info: `Sur chaque euro de revenu, ${totalMargin}% reste après toutes les dépenses ${scope}. ${totalMargin >= 30 ? "Excellente rentabilité." : totalMargin >= 10 ? "Rentabilité correcte." : "Attention, rentabilité faible."}`,
+      variation: comparison?.totalMargin ?? null,
     },
     {
       key: "totalRevenue",
@@ -55,6 +104,7 @@ export function StatsCards({ occupancyRate, avgRevenuePerNight, totalMargin, rev
       icon: BarChart3,
       color: "text-emerald-400",
       info: `Total des revenus encaissés ${scope} sur la période : ${formatCurrency(totalRevenue)}.`,
+      variation: comparison?.totalRevenue ?? null,
     },
     {
       key: "revpar",
@@ -63,6 +113,7 @@ export function StatsCards({ occupancyRate, avgRevenuePerNight, totalMargin, rev
       icon: TrendingUp,
       color: "text-blue-400",
       info: `Revenue Per Available Room-night. Chaque nuit disponible (louée ou non) génère ${formatCurrency(revPAR)} ${scope}. Combine occupation × tarif.`,
+      variation: comparison?.revPAR ?? null,
     },
     {
       key: "adr",
@@ -71,6 +122,7 @@ export function StatsCards({ occupancyRate, avgRevenuePerNight, totalMargin, rev
       icon: Tag,
       color: "text-orange-400",
       info: `Average Daily Rate. Le tarif moyen par nuit effectivement louée est de ${formatCurrency(adr)} ${scope}. C'est votre prix de vente réel.`,
+      variation: comparison?.adr ?? null,
     },
   ]
 
@@ -98,7 +150,14 @@ export function StatsCards({ occupancyRate, avgRevenuePerNight, totalMargin, rev
                   <p className="text-sm text-muted-foreground">{card.label}</p>
                   <InfoTooltip text={card.info} />
                 </div>
-                <p className="text-xl font-bold">{card.value}</p>
+                <div className="flex items-baseline justify-between gap-2">
+                  <p className="text-xl font-bold">{card.value}</p>
+                  {comparison && (
+                    <div title="vs mois précédent">
+                      <VariationBadge value={card.variation} />
+                    </div>
+                  )}
+                </div>
               </div>
             </CardContent>
           </Card>
