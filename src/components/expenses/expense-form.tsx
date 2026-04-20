@@ -30,26 +30,7 @@ interface Property {
   name: string
 }
 
-const categoryLabels: Record<string, string> = {
-  CLEANING: "Ménage",
-  MAINTENANCE: "Maintenance",
-  SUPPLIES: "Fournitures",
-  RENT: "Loyer",
-  INSURANCE: "Assurance",
-  TAX: "Taxes",
-  PLATFORM_FEE: "Commission plateforme",
-  UTILITIES: "Charges",
-  FURNISHING: "Ameublement",
-  MARKETING: "Marketing",
-  OTHER: "Autre",
-}
-
-const frequencyLabels: Record<string, string> = {
-  WEEKLY: "Hebdomadaire",
-  MONTHLY: "Mensuel",
-  QUARTERLY: "Trimestriel",
-  YEARLY: "Annuel",
-}
+import { categoryLabels, frequencyLabels } from "@/lib/constants"
 
 interface ExpenseFormProps {
   properties: Property[]
@@ -275,4 +256,4 @@ export function ExpenseForm({
   )
 }
 
-export { categoryLabels }
+export { categoryLabels } from "@/lib/constants"

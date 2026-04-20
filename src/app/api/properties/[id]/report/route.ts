@@ -1,10 +1,8 @@
+import { round1 } from "@/lib/utils"
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { createClient } from "@/lib/supabase/server"
 
-function round1(v: number): number {
-  return Math.round(v * 10) / 10
-}
 
 export async function GET(
   request: Request,
