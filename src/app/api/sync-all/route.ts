@@ -2,18 +2,7 @@ import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { createClient } from "@/lib/supabase/server"
 import { parseIcal, detectPlatform } from "@/lib/ical-parser"
-
-function isAllowedUrl(url: string): boolean {
-  try {
-    const parsed = new URL(url)
-    if (parsed.protocol !== "https:") return false
-    const host = parsed.hostname.toLowerCase()
-    if (host === "localhost" || host === "127.0.0.1" || host.startsWith("192.168.") || host.startsWith("10.") || host === "0.0.0.0") return false
-    return true
-  } catch {
-    return false
-  }
-}
+import { isAllowedUrl } from "@/lib/url-validator"
 
 export async function POST() {
   const supabase = await createClient()
@@ -58,14 +47,10 @@ export async function POST() {
         const bookings = parseIcal(icalData)
 
         for (const booking of bookings) {
-          const existing = await prisma.booking.findUnique({
+          const result = await prisma.booking.upsert({
             where: { externalId: booking.externalId },
-          })
-
-          if (existing) { skipped++; continue }
-
-          await prisma.booking.create({
-            data: {
+            update: {},
+            create: {
               propertyId: property.id,
               guestName: booking.guestName,
               checkIn: booking.checkIn,
@@ -77,7 +62,11 @@ export async function POST() {
               externalId: booking.externalId,
             },
           })
-          created++
+          if (result.createdAt.getTime() > Date.now() - 5000) {
+            created++
+          } else {
+            skipped++
+          }
         }
       } catch {
         results.push({ propertyName: property.name, created, skipped, error: "Erreur de sync" })

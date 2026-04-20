@@ -24,6 +24,11 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "No file provided" }, { status: 400 })
   }
 
+  const allowedTypes = ["text/csv", "application/csv", "text/plain", "application/vnd.ms-excel"]
+  if (file.type && !allowedTypes.includes(file.type)) {
+    return NextResponse.json({ error: "Type de fichier invalide. Seuls les CSV sont acceptés." }, { status: 400 })
+  }
+
   if (file.size > 5_000_000) {
     return NextResponse.json({ error: "Fichier trop volumineux (max 5MB)" }, { status: 413 })
   }
