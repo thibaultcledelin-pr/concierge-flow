@@ -37,6 +37,10 @@ export async function GET(
   const profit = revenue - expenses
   const now = new Date()
   const daysThisMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate()
+  const thisMonthKey = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, "0")}`
+  const nightsThisMonth = property.bookings
+    .filter((b) => new Date(b.checkIn).toISOString().slice(0, 7) === thisMonthKey)
+    .reduce((sum, b) => sum + b.nights, 0)
 
   const stats = {
     revenue,
@@ -46,7 +50,7 @@ export async function GET(
     nights,
     bookingCount: property.bookings.length,
     expenseCount: property.expenses.length,
-    occupancy: daysThisMonth > 0 ? round1((nights / daysThisMonth) * 100) : 0,
+    occupancy: daysThisMonth > 0 ? round1(Math.min(100, (nightsThisMonth / daysThisMonth) * 100)) : 0,
     revenuePerNight: nights > 0 ? round1(profit / nights) : 0,
     adr: nights > 0 ? round1(revenue / nights) : 0,
   }
