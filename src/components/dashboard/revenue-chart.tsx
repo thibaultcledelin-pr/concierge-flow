@@ -53,8 +53,8 @@ export function RevenueChart({ data }: RevenueChartProps) {
                 <stop offset="100%" stopColor="#22c55e" stopOpacity={0} />
               </linearGradient>
               <linearGradient id="profitGrad" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#7c3aed" stopOpacity={0.15} />
-                <stop offset="100%" stopColor="#7c3aed" stopOpacity={0} />
+                <stop offset="0%" stopColor="#f59e0b" stopOpacity={0.15} />
+                <stop offset="100%" stopColor="#f59e0b" stopOpacity={0} />
               </linearGradient>
             </defs>
             <CartesianGrid strokeDasharray="4 4" stroke="rgba(255,255,255,0.04)" />
@@ -116,11 +116,11 @@ export function RevenueChart({ data }: RevenueChartProps) {
             <Area
               type="monotone"
               dataKey="profit"
-              stroke="#7c3aed"
+              stroke="#f59e0b"
               fill="url(#profitGrad)"
               strokeWidth={2.5}
               dot={false}
-              activeDot={{ r: 5, fill: "#7c3aed", strokeWidth: 2, stroke: "hsl(var(--card))" }}
+              activeDot={{ r: 5, fill: "#f59e0b", strokeWidth: 2, stroke: "hsl(var(--card))" }}
               animationDuration={1400}
               animationEasing="ease-out"
             />
