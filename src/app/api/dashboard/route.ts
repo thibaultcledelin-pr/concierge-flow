@@ -48,9 +48,51 @@ function toMonthKey(date: Date): string {
 }
 
 // Mois courant au format "2026-04"
+// Mois courant et précédent
 function currentMonthKey(): string {
   const now = new Date()
   return `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, "0")}`
+}
+
+function previousMonthKey(): string {
+  const now = new Date()
+  const prev = new Date(now.getFullYear(), now.getMonth() - 1, 1)
+  return `${prev.getFullYear()}-${(prev.getMonth() + 1).toString().padStart(2, "0")}`
+}
+
+// Calcule les KPIs pour un ensemble de bookings et expenses filtrés par mois
+function computeKpisForMonth(
+  bookings: BookingRecord[],
+  expenses: ExpenseRecord[],
+  monthKey: string,
+  daysInMonthValue: number,
+  propertyCount: number,
+) {
+  const monthBookings = bookings.filter((b) => toMonthKey(b.checkIn) === monthKey)
+  const monthExpenses = expenses.filter((e) => toMonthKey(e.date) === monthKey)
+
+  const revenue = monthBookings.reduce((s, b) => s + b.totalAmount, 0)
+  const expensesTotal = monthExpenses.reduce((s, e) => s + e.amount, 0)
+  const nights = monthBookings.reduce((s, b) => s + b.nights, 0)
+  const profit = revenue - expensesTotal
+  const daysAvailable = daysInMonthValue * propertyCount
+
+  return {
+    totalRevenue: revenue,
+    totalExpenses: expensesTotal,
+    totalProfit: profit,
+    totalMargin: revenue > 0 ? round1((profit / revenue) * 100) : 0,
+    occupancyRate: daysAvailable > 0 ? round1(Math.min(100, (nights / daysAvailable) * 100)) : 0,
+    avgRevenuePerNight: nights > 0 ? round1(profit / nights) : 0,
+    revPAR: daysAvailable > 0 ? round1(revenue / daysAvailable) : 0,
+    adr: nights > 0 ? round1(revenue / nights) : 0,
+  }
+}
+
+// Variation en % entre deux valeurs (null si la valeur précédente est 0)
+function variation(current: number, previous: number): number | null {
+  if (previous === 0) return null
+  return round1(((current - previous) / Math.abs(previous)) * 100)
 }
 
 // --- Calcul de la rentabilité par logement ---
@@ -241,6 +283,35 @@ export async function GET(request: Request) {
     propertyCount: properties.length,
   }
 
+  // Comparaison mois actuel vs mois précédent
+  const allBookings = properties.flatMap((p) => p.bookings)
+  const allExpenses = [
+    ...properties.flatMap((p) => p.expenses),
+    ...globalExpenses,
+  ]
+  const currentMonth = currentMonthKey()
+  const previousMonth = previousMonthKey()
+  const daysCurrent = daysInCurrentMonth()
+  const daysPrevious = new Date(
+    parseInt(previousMonth.slice(0, 4)),
+    parseInt(previousMonth.slice(5, 7)),
+    0,
+  ).getDate()
+
+  const currentStats = computeKpisForMonth(allBookings, allExpenses, currentMonth, daysCurrent, properties.length)
+  const previousStats = computeKpisForMonth(allBookings, allExpenses, previousMonth, daysPrevious, properties.length)
+
+  const comparison = {
+    totalRevenue: variation(currentStats.totalRevenue, previousStats.totalRevenue),
+    totalExpenses: variation(currentStats.totalExpenses, previousStats.totalExpenses),
+    totalProfit: variation(currentStats.totalProfit, previousStats.totalProfit),
+    totalMargin: variation(currentStats.totalMargin, previousStats.totalMargin),
+    occupancyRate: variation(currentStats.occupancyRate, previousStats.occupancyRate),
+    avgRevenuePerNight: variation(currentStats.avgRevenuePerNight, previousStats.avgRevenuePerNight),
+    revPAR: variation(currentStats.revPAR, previousStats.revPAR),
+    adr: variation(currentStats.adr, previousStats.adr),
+  }
+
   // Répartition par plateforme (Airbnb, Booking, etc.)
   const platformRevenue: Record<string, number> = {}
   for (const property of properties) {
@@ -269,5 +340,6 @@ export async function GET(request: Request) {
     occupancyByProperty,
     platformData,
     allProperties,
+    comparison,
   })
 }
