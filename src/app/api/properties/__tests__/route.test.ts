@@ -33,12 +33,12 @@ describe("Properties API", () => {
       expect(res.status).toBe(401)
     })
 
-    it("returns properties for authenticated user", async () => {
+    it("returns properties for authenticated user without sensitive fields", async () => {
       mockGetUser.mockResolvedValue({
         data: { user: { id: "user-1" } },
       })
       const mockProperties = [
-        { id: "1", name: "Studio Marais", city: "Paris" },
+        { id: "1", name: "Studio Marais", city: "Paris", icalUrl: "https://secret.com", ownerEmail: "secret@test.com" },
       ]
       mockFindMany.mockResolvedValue(mockProperties)
 
@@ -46,7 +46,11 @@ describe("Properties API", () => {
       const data = await res.json()
 
       expect(res.status).toBe(200)
-      expect(data).toEqual(mockProperties)
+      expect(data[0].name).toBe("Studio Marais")
+      expect(data[0].icalUrl).toBeUndefined()
+      expect(data[0].ownerEmail).toBeUndefined()
+      expect(data[0].hasIcal).toBe(true)
+      expect(data[0].hasOwnerEmail).toBe(true)
       expect(mockFindMany).toHaveBeenCalledWith({
         where: { userId: "user-1" },
         orderBy: { createdAt: "desc" },
