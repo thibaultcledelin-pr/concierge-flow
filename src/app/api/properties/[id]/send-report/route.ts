@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma"
 import { createClient } from "@/lib/supabase/server"
 import { Resend } from "resend"
 import { round1 } from "@/lib/utils"
+import { escapeHtml } from "@/lib/sanitize"
 
 const MONTHS_FR = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"]
 
@@ -66,17 +67,18 @@ export async function POST(
   const margin = totalRevenue > 0 ? round1((profit / totalRevenue) * 100) : 0
 
   const periodLabel = formatPeriod(month)
-  const ownerName = property.ownerName || "Bonjour"
+  const ownerName = escapeHtml(property.ownerName || "Bonjour")
+  const propertyName = escapeHtml(property.name)
 
   const html = `
     <div style="font-family: -apple-system, BlinkMacSystemFont, sans-serif; max-width: 600px; margin: 0 auto; color: #1a1a1a;">
       <div style="background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%); padding: 32px; border-radius: 12px 12px 0 0; color: white;">
-        <h1 style="margin: 0; font-size: 24px;">Rapport mensuel — ${property.name}</h1>
+        <h1 style="margin: 0; font-size: 24px;">Rapport mensuel — ${propertyName}</h1>
         <p style="margin: 8px 0 0; opacity: 0.9;">${periodLabel}</p>
       </div>
       <div style="background: white; padding: 32px; border: 1px solid #e5e5e5; border-top: none; border-radius: 0 0 12px 12px;">
         <p>Bonjour ${ownerName},</p>
-        <p>Voici le résumé de l'activité de votre logement <strong>${property.name}</strong> pour ${periodLabel}.</p>
+        <p>Voici le résumé de l'activité de votre logement <strong>${propertyName}</strong> pour ${periodLabel}.</p>
 
         <table style="width: 100%; border-collapse: collapse; margin: 24px 0;">
           <tr style="border-bottom: 1px solid #e5e5e5;">
@@ -113,7 +115,7 @@ export async function POST(
     await resend.emails.send({
       from: process.env.RESEND_FROM_EMAIL || "ConciergeFlow <onboarding@resend.dev>",
       to: property.ownerEmail,
-      subject: `Rapport ${periodLabel} — ${property.name}`,
+      subject: `Rapport ${periodLabel} — ${propertyName}`,
       html,
     })
 
