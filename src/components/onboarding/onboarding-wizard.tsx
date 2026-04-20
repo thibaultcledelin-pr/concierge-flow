@@ -81,12 +81,12 @@ export function OnboardingWizard() {
           {STEPS.map((s, i) => (
             <div key={i} className="flex items-center gap-2">
               <div className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold transition-colors ${
-                i <= step ? "bg-violet-600 text-white" : "bg-muted text-muted-foreground"
+                i <= step ? "bg-amber-500 text-white" : "bg-muted text-muted-foreground"
               }`}>
                 {i < step ? <CheckCircle className="h-4 w-4" /> : i + 1}
               </div>
               {i < STEPS.length - 1 && (
-                <div className={`h-0.5 w-8 transition-colors ${i < step ? "bg-violet-600" : "bg-muted"}`} />
+                <div className={`h-0.5 w-8 transition-colors ${i < step ? "bg-amber-500" : "bg-muted"}`} />
               )}
             </div>
           ))}
@@ -96,8 +96,8 @@ export function OnboardingWizard() {
         {step === 0 && (
           <Card>
             <CardContent className="space-y-6 p-8 text-center">
-              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-violet-600/15">
-                <Home className="h-8 w-8 text-violet-400" />
+              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-amber-500/15">
+                <Home className="h-8 w-8 text-amber-400" />
               </div>
               <div>
                 <h2 className="text-2xl font-bold">Bienvenue sur ConciergeFlow</h2>
@@ -106,7 +106,7 @@ export function OnboardingWizard() {
                   Commençons par ajouter votre premier logement.
                 </p>
               </div>
-              <Button onClick={() => setStep(1)} className="w-full bg-violet-600 hover:bg-violet-500">
+              <Button onClick={() => setStep(1)} className="w-full bg-amber-500 hover:bg-amber-400">
                 Commencer
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
@@ -197,7 +197,7 @@ export function OnboardingWizard() {
                 </div>
               </div>
 
-              <Button onClick={handleCreateProperty} disabled={saving} className="w-full bg-violet-600 hover:bg-violet-500">
+              <Button onClick={handleCreateProperty} disabled={saving} className="w-full bg-amber-500 hover:bg-amber-400">
                 {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                 Créer mon logement
               </Button>
@@ -223,7 +223,7 @@ export function OnboardingWizard() {
                 <Button variant="outline" onClick={() => router.push("/properties")} className="flex-1">
                   Voir mes logements
                 </Button>
-                <Button onClick={() => router.push("/dashboard")} className="flex-1 bg-violet-600 hover:bg-violet-500">
+                <Button onClick={() => router.push("/dashboard")} className="flex-1 bg-amber-500 hover:bg-amber-400">
                   Aller au dashboard
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
