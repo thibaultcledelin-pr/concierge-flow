@@ -10,6 +10,8 @@ export const propertySchema = z.object({
   icalUrl: z.string().url().refine(url => url.startsWith('https://'), { message: 'URL doit \u00eatre en HTTPS' }).optional().or(z.literal('')),
   icalUrlBooking: z.string().url().refine(url => url.startsWith('https://'), { message: 'URL doit \u00eatre en HTTPS' }).optional().or(z.literal('')),
   monthlyRent: z.number().positive().optional(),
+  ownerName: z.string().optional().or(z.literal('')),
+  ownerEmail: z.string().email('Email invalide').optional().or(z.literal('')),
 })
 
 export const expenseSchema = z.object({
