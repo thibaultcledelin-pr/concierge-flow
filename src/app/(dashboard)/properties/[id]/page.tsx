@@ -149,7 +149,10 @@ export default function PropertyDetailPage() {
           </CardHeader>
           <CardContent>
             {data.recentBookings.length === 0 ? (
-              <p className="py-4 text-center text-sm text-muted-foreground">Aucune réservation</p>
+              <div className="flex flex-col items-center gap-2 py-8">
+                <p className="text-sm font-medium">Aucune reservation</p>
+                <p className="text-xs text-muted-foreground">Configurez l&apos;URL iCal dans les parametres ou importez un CSV depuis la page Revenus</p>
+              </div>
             ) : (
               <div className="space-y-3">
                 {data.recentBookings.map((booking) => (
@@ -179,7 +182,10 @@ export default function PropertyDetailPage() {
           </CardHeader>
           <CardContent>
             {data.recentExpenses.length === 0 ? (
-              <p className="py-4 text-center text-sm text-muted-foreground">Aucune dépense</p>
+              <div className="flex flex-col items-center gap-2 py-8">
+                <p className="text-sm font-medium">Aucune depense</p>
+                <p className="text-xs text-muted-foreground">Ajoutez des depenses depuis la page Depenses pour suivre la marge de ce logement</p>
+              </div>
             ) : (
               <div className="space-y-3">
                 {data.recentExpenses.map((expense) => (
