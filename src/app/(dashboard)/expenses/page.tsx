@@ -21,6 +21,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { ExpenseForm, categoryLabels } from "@/components/expenses/expense-form"
+import { RunRecurringButton } from "@/components/expenses/run-recurring-button"
 import { formatCurrency, formatDate } from "@/lib/utils"
 
 interface Property {
@@ -104,15 +105,18 @@ export default function ExpensesPage() {
             {expenses.length} dépense{expenses.length !== 1 ? "s" : ""} · {formatCurrency(totalExpenses)}
           </p>
         </div>
-        <Button
-          onClick={() => {
-            setEditingExpense(null)
-            setFormOpen(true)
-          }}
-        >
-          <Plus className="mr-2 h-4 w-4" />
-          Ajouter
-        </Button>
+        <div className="flex items-center gap-2">
+          <RunRecurringButton onDone={() => fetchExpenses()} />
+          <Button
+            onClick={() => {
+              setEditingExpense(null)
+              setFormOpen(true)
+            }}
+          >
+            <Plus className="mr-2 h-4 w-4" />
+            Ajouter
+          </Button>
+        </div>
       </div>
 
       <div className="mb-6 flex flex-wrap gap-3">
