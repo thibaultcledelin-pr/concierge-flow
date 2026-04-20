@@ -15,7 +15,7 @@ export function OccupationDonut({ rate, label = "Occupation" }: OccupationDonutP
     { name: "empty", value: 100 - capped },
   ]
 
-  const color = capped >= 75 ? "#7c3aed" : capped >= 50 ? "#f97316" : "#ef4444"
+  const color = capped >= 75 ? "#f59e0b" : capped >= 50 ? "#fb923c" : "#ef4444"
 
   return (
     <Card>

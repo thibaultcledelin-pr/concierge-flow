@@ -153,7 +153,7 @@ export default function DashboardPage() {
           <SyncButton />
           <Link
             href="/properties/new"
-            className="inline-flex items-center gap-2 rounded-md bg-violet-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-violet-500"
+            className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-amber-500 to-orange-600 px-4 py-2 text-sm font-medium text-white transition-all hover:from-amber-400 hover:to-orange-500 shadow-sm shadow-amber-500/20"
           >
             <Plus className="h-4 w-4" />
             <span className="hidden sm:inline">Ajouter un logement</span>

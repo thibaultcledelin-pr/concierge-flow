@@ -61,7 +61,7 @@ export function Topbar({ onMenuClick }: TopbarProps) {
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" className="gap-2 rounded-full px-2 hover:bg-accent">
             <Avatar className="h-8 w-8">
-              <AvatarFallback className="bg-gradient-to-br from-violet-500 to-violet-700 text-xs font-semibold text-white">
+              <AvatarFallback className="bg-gradient-to-br from-amber-500 to-orange-600 text-xs font-semibold text-white">
                 MC
               </AvatarFallback>
             </Avatar>
@@ -71,7 +71,7 @@ export function Topbar({ onMenuClick }: TopbarProps) {
         <DropdownMenuContent align="end" className="w-64 p-0">
           <div className="flex items-center gap-3 px-4 py-3">
             <Avatar className="h-10 w-10">
-              <AvatarFallback className="bg-gradient-to-br from-violet-500 to-violet-700 text-sm font-semibold text-white">
+              <AvatarFallback className="bg-gradient-to-br from-amber-500 to-orange-600 text-sm font-semibold text-white">
                 MC
               </AvatarFallback>
             </Avatar>
