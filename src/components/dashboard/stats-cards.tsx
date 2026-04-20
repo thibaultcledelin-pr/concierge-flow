@@ -127,31 +127,31 @@ export function StatsCards({ occupancyRate, avgRevenuePerNight, totalMargin, rev
   ]
 
   return (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
       {cards.map((card) => {
         const isActive = activeCard === card.key
         return (
           <Card
             key={card.key}
             className={cn(
-              "cursor-pointer transition-all duration-200",
+              "cursor-pointer border-border/40 transition-all duration-200",
               isActive
-                ? "border-violet-500/50 bg-violet-500/5 ring-1 ring-violet-500/30"
-                : "hover:border-muted-foreground/25 hover:bg-muted/30"
+                ? "border-violet-500/40 bg-violet-500/[0.04] ring-1 ring-violet-500/20"
+                : "hover:border-border/70 hover:bg-white/[0.02]"
             )}
             onClick={() => onCardClick?.(card.key)}
           >
-            <CardContent className="flex items-center gap-4 p-5">
-              <div className={`rounded-lg bg-muted p-2.5 ${card.color}`}>
+            <CardContent className="flex items-center gap-4 p-6">
+              <div className={`rounded-xl bg-white/[0.04] p-3 ${card.color}`}>
                 <card.icon className="h-5 w-5" />
               </div>
               <div className="flex-1">
                 <div className="flex items-center justify-between">
-                  <p className="text-sm text-muted-foreground">{card.label}</p>
+                  <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">{card.label}</p>
                   <InfoTooltip text={card.info} />
                 </div>
-                <div className="flex items-baseline justify-between gap-2">
-                  <p className="text-xl font-bold">{card.value}</p>
+                <div className="mt-1 flex items-baseline justify-between gap-2">
+                  <p className="text-2xl font-bold tracking-tight">{card.value}</p>
                   {comparison && (
                     <div title="vs mois précédent">
                       <VariationBadge value={card.variation} />

@@ -34,7 +34,7 @@ export function Topbar({ onMenuClick }: TopbarProps) {
   }
 
   return (
-    <header className="flex h-14 items-center justify-between border-b border-border bg-card px-4">
+    <header className="flex h-16 items-center justify-between border-b border-border/50 bg-background/80 px-5 backdrop-blur-sm">
       <div className="flex items-center gap-3">
         <Button
           variant="ghost"
