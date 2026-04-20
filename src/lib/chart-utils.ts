@@ -6,8 +6,8 @@ export function formatMonth(month: string): string {
 }
 
 export const TOOLTIP_STYLE = {
-  backgroundColor: "rgba(8,8,12,0.96)",
-  border: "1px solid rgba(255,255,255,0.06)",
+  backgroundColor: "rgba(18,14,10,0.96)",
+  border: "1px solid rgba(255,200,100,0.08)",
   borderRadius: "12px",
   padding: "14px 16px",
   color: "#d4d4d4",

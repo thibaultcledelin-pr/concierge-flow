@@ -46,8 +46,8 @@ export function OccupancyChart({ data }: OccupancyChartProps) {
           <AreaChart data={data}>
             <defs>
               <linearGradient id="occupancyGrad" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#7c3aed" stopOpacity={0.25} />
-                <stop offset="100%" stopColor="#7c3aed" stopOpacity={0} />
+                <stop offset="0%" stopColor="#f59e0b" stopOpacity={0.25} />
+                <stop offset="100%" stopColor="#f59e0b" stopOpacity={0} />
               </linearGradient>
             </defs>
             <CartesianGrid strokeDasharray="4 4" stroke="rgba(255,255,255,0.04)" />
@@ -76,11 +76,11 @@ export function OccupancyChart({ data }: OccupancyChartProps) {
             <Area
               type="monotone"
               dataKey="occupancy"
-              stroke="#7c3aed"
+              stroke="#f59e0b"
               fill="url(#occupancyGrad)"
               strokeWidth={2.5}
               dot={false}
-              activeDot={{ r: 6, fill: "#7c3aed", strokeWidth: 2, stroke: "hsl(var(--card))" }}
+              activeDot={{ r: 6, fill: "#f59e0b", strokeWidth: 2, stroke: "hsl(var(--card))" }}
               animationDuration={1400}
               animationEasing="ease-out"
             />

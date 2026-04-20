@@ -27,7 +27,7 @@ export function Sidebar() {
   return (
     <aside className="hidden w-56 shrink-0 border-r border-border/50 bg-sidebar lg:block">
       <Link href="/dashboard" className="flex h-16 items-center gap-2.5 border-b border-border/50 px-5 transition-opacity hover:opacity-80">
-        <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 to-violet-700 text-xs font-bold text-white shadow-lg shadow-violet-500/20">
+        <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 text-xs font-bold text-white shadow-lg shadow-amber-500/20">
           C
         </div>
         <span className="text-sm font-semibold tracking-tight text-foreground/90">ConciergeFlow</span>
@@ -43,11 +43,11 @@ export function Sidebar() {
               className={cn(
                 "flex items-center gap-3 rounded-lg px-3 py-2.5 text-[13px] font-medium transition-all duration-150",
                 isActive
-                  ? "bg-violet-500/10 text-violet-400 shadow-sm shadow-violet-500/5"
+                  ? "bg-amber-500/10 text-amber-400 shadow-sm shadow-amber-500/5"
                   : "text-muted-foreground hover:bg-white/[0.03] hover:text-foreground"
               )}
             >
-              <item.icon className={cn("h-[18px] w-[18px]", isActive && "text-violet-400")} />
+              <item.icon className={cn("h-[18px] w-[18px]", isActive && "text-amber-400")} />
               {item.label}
             </Link>
           )

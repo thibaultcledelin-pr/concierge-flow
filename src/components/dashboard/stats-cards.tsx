@@ -75,7 +75,7 @@ export function StatsCards({ occupancyRate, avgRevenuePerNight, totalMargin, rev
       label: "Occupation moyenne",
       value: `${occupancyRate}%`,
       icon: Calendar,
-      color: "text-violet-400",
+      color: "text-amber-400",
       info: `${occupancyRate}% des nuits disponibles ont été louées ${scope} ce mois-ci. Au-dessus de 70% c'est excellent.`,
       variation: comparison?.occupancyRate ?? null,
     },
@@ -136,7 +136,7 @@ export function StatsCards({ occupancyRate, avgRevenuePerNight, totalMargin, rev
             className={cn(
               "cursor-pointer border-border/40 transition-all duration-200",
               isActive
-                ? "border-violet-500/40 bg-violet-500/[0.04] ring-1 ring-violet-500/20"
+                ? "border-amber-500/40 bg-amber-500/[0.04] ring-1 ring-amber-500/20"
                 : "hover:border-border/70 hover:bg-white/[0.02]"
             )}
             onClick={() => onCardClick?.(card.key)}
