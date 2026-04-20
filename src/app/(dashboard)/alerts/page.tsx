@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import { AlertTriangle, AlertCircle, Info, ArrowRight } from "lucide-react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { PageLoading } from "@/components/ui/page-loading"
 import { PageError } from "@/components/ui/page-error"
 

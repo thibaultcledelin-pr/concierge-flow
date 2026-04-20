@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { createClient } from "@/lib/supabase/server"
 import { Resend } from "resend"
+import { round1 } from "@/lib/utils"
 
 const MONTHS_FR = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"]
 
@@ -11,9 +12,6 @@ function formatPeriod(period: string): string {
   return `${MONTHS_FR[parseInt(month) - 1]} ${year}`
 }
 
-function round1(v: number): number {
-  return Math.round(v * 10) / 10
-}
 
 export async function POST(
   request: Request,

@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/table"
 import { ExpenseForm, categoryLabels } from "@/components/expenses/expense-form"
 import { RunRecurringButton } from "@/components/expenses/run-recurring-button"
+import { useToast } from "@/hooks/use-toast"
 import { formatCurrency, formatDate } from "@/lib/utils"
 
 interface Property {
@@ -50,6 +51,7 @@ export default function ExpensesPage() {
   const [filterCategory, setFilterCategory] = useState<string>("all")
   const [formOpen, setFormOpen] = useState(false)
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null)
+  const { toast } = useToast()
 
   const fetchExpenses = useCallback(() => {
     const params = new URLSearchParams()
@@ -79,12 +81,12 @@ export default function ExpensesPage() {
     try {
       const res = await fetch(`/api/expenses/${id}`, { method: "DELETE" })
       if (!res.ok) {
-        alert("Impossible de supprimer cette dépense. Réessayez.")
+        toast({ title: "Erreur", description: "Impossible de supprimer cette dépense", variant: "destructive" })
         return
       }
       setExpenses((prev) => prev.filter((e) => e.id !== id))
     } catch {
-      alert("Erreur réseau. Vérifiez votre connexion.")
+      toast({ title: "Erreur réseau", description: "Vérifiez votre connexion", variant: "destructive" })
     }
   }
 

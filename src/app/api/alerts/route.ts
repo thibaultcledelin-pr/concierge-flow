@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { createClient } from "@/lib/supabase/server"
+import { round1 } from "@/lib/utils"
 
 interface PropertyData {
   id: string
@@ -17,9 +18,6 @@ interface Alert {
   propertyId: string
 }
 
-function round1(v: number): number {
-  return Math.round(v * 10) / 10
-}
 
 function generateAlerts(properties: PropertyData[]): Alert[] {
   const alerts: Alert[] = []
