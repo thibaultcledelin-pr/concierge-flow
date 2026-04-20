@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge"
 import { PageLoading } from "@/components/ui/page-loading"
 import { RevenueChart } from "@/components/dashboard/revenue-chart"
 import { formatCurrency, formatDate } from "@/lib/utils"
+import { categoryLabels, propertyTypeLabels } from "@/lib/constants"
 
 interface PropertyStats {
   property: {
@@ -53,26 +54,6 @@ interface PropertyStats {
   }[]
 }
 
-const typeLabels: Record<string, string> = {
-  APARTMENT: "Appartement",
-  HOUSE: "Maison",
-  STUDIO: "Studio",
-  LOFT: "Loft",
-  VILLA: "Villa",
-  OTHER: "Autre",
-}
-
-const categoryLabels: Record<string, string> = {
-  CLEANING: "Ménage",
-  MAINTENANCE: "Maintenance",
-  SUPPLIES: "Fournitures",
-  INSURANCE: "Assurance",
-  TAX: "Taxes",
-  COMMISSION: "Commission",
-  MORTGAGE: "Crédit",
-  UTILITIES: "Charges",
-  OTHER: "Autre",
-}
 
 export default function PropertyDetailPage() {
   const params = useParams()
@@ -122,7 +103,7 @@ export default function PropertyDetailPage() {
         <div className="flex-1">
           <div className="flex items-center gap-2">
             <h1 className="text-2xl font-bold tracking-tight">{property.name}</h1>
-            <Badge variant="secondary">{typeLabels[property.type] || property.type}</Badge>
+            <Badge variant="secondary">{propertyTypeLabels[property.type] || property.type}</Badge>
           </div>
           <p className="text-sm text-muted-foreground">
             {property.address}, {property.city}
