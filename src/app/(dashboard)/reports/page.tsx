@@ -1,15 +1,18 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { FileText } from "lucide-react"
+import { FileText, AlertCircle } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { PageLoading } from "@/components/ui/page-loading"
 import { ReportButton } from "@/components/reports/report-button"
+import { SendReportButton } from "@/components/reports/send-report-button"
 
 interface Property {
   id: string
   name: string
   city: string
+  ownerName: string | null
+  ownerEmail: string | null
 }
 
 export default function ReportsPage() {
@@ -43,7 +46,7 @@ export default function ReportsPage() {
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Rapports propriétaire</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Générez un rapport PDF pour chaque logement à envoyer au propriétaire
+          Téléchargez un PDF ou envoyez directement le rapport par email au propriétaire
         </p>
       </div>
 
@@ -63,11 +66,31 @@ export default function ReportsPage() {
               <CardHeader>
                 <CardTitle className="text-base">{property.name}</CardTitle>
                 <p className="text-xs text-muted-foreground">{property.city}</p>
+                {property.ownerEmail ? (
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Propriétaire : <span className="text-foreground">{property.ownerName || property.ownerEmail}</span>
+                  </p>
+                ) : (
+                  <p className="mt-1 flex items-center gap-1 text-xs text-yellow-500">
+                    <AlertCircle className="h-3 w-3" />
+                    Aucun email propriétaire configuré
+                  </p>
+                )}
               </CardHeader>
               <CardContent className="space-y-2">
-                <ReportButton propertyId={property.id} propertyName={property.name} month={currentMonth} />
-                <ReportButton propertyId={property.id} propertyName={property.name} month={lastMonth} />
-                <ReportButton propertyId={property.id} propertyName={property.name} />
+                <div className="space-y-2">
+                  <p className="text-xs font-medium text-muted-foreground">Télécharger PDF</p>
+                  <ReportButton propertyId={property.id} propertyName={property.name} month={currentMonth} />
+                  <ReportButton propertyId={property.id} propertyName={property.name} month={lastMonth} />
+                  <ReportButton propertyId={property.id} propertyName={property.name} />
+                </div>
+                {property.ownerEmail && (
+                  <div className="space-y-2 border-t border-border pt-2">
+                    <p className="text-xs font-medium text-muted-foreground">Envoyer par email</p>
+                    <SendReportButton propertyId={property.id} propertyName={property.name} month={currentMonth} />
+                    <SendReportButton propertyId={property.id} propertyName={property.name} month={lastMonth} />
+                  </div>
+                )}
               </CardContent>
             </Card>
           ))}

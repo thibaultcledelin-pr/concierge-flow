@@ -48,6 +48,8 @@ export async function POST(request: Request) {
       ...result.data,
       icalUrl: result.data.icalUrl || null,
       icalUrlBooking: result.data.icalUrlBooking || null,
+      ownerName: result.data.ownerName || null,
+      ownerEmail: result.data.ownerEmail || null,
       userId: user.id,
     },
   })
