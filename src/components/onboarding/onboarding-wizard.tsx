@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { Home, Calendar, CheckCircle, ArrowRight, Loader2 } from "lucide-react"
+import { Home, Receipt, CheckCircle, ArrowRight, Loader2, Plus, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -15,11 +15,13 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { useToast } from "@/hooks/use-toast"
+import { categoryLabels } from "@/lib/constants"
 
 const STEPS = [
   { icon: Home, label: "Bienvenue" },
-  { icon: Calendar, label: "Premier logement" },
-  { icon: CheckCircle, label: "C'est parti !" },
+  { icon: Home, label: "Logement" },
+  { icon: Receipt, label: "Depenses" },
+  { icon: CheckCircle, label: "Pret !" },
 ]
 
 const typeOptions = [
@@ -31,11 +33,19 @@ const typeOptions = [
   { value: "OTHER", label: "Autre" },
 ]
 
+interface ExpenseEntry {
+  label: string
+  amount: string
+  category: string
+  isRecurring: boolean
+}
+
 export function OnboardingWizard() {
   const router = useRouter()
   const { toast } = useToast()
   const [step, setStep] = useState(0)
   const [saving, setSaving] = useState(false)
+  const [propertyId, setPropertyId] = useState<string | null>(null)
 
   const [form, setForm] = useState({
     name: "",
@@ -45,6 +55,10 @@ export function OnboardingWizard() {
     rooms: 1,
     icalUrl: "",
   })
+
+  const [expenses, setExpenses] = useState<ExpenseEntry[]>([
+    { label: "", amount: "", category: "CLEANING", isRecurring: false },
+  ])
 
   async function handleCreateProperty() {
     if (!form.name || !form.address || !form.city) {
@@ -65,12 +79,60 @@ export function OnboardingWizard() {
       })
 
       if (!res.ok) throw new Error()
+      const property = await res.json()
+      setPropertyId(property.id)
       setStep(2)
     } catch {
-      toast({ title: "Erreur", description: "Impossible de créer le logement", variant: "destructive" })
+      toast({ title: "Erreur", description: "Impossible de creer le logement", variant: "destructive" })
     } finally {
       setSaving(false)
     }
+  }
+
+  async function handleSaveExpenses() {
+    const validExpenses = expenses.filter((e) => e.label && e.amount)
+    if (validExpenses.length === 0) {
+      setStep(3)
+      return
+    }
+
+    setSaving(true)
+    try {
+      for (const expense of validExpenses) {
+        await fetch("/api/expenses", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            propertyId,
+            label: expense.label,
+            amount: parseFloat(expense.amount),
+            category: expense.category,
+            date: new Date().toISOString(),
+            isRecurring: expense.isRecurring,
+            frequency: expense.isRecurring ? "MONTHLY" : undefined,
+          }),
+        })
+      }
+      setStep(3)
+    } catch {
+      toast({ title: "Erreur", description: "Impossible de sauvegarder les depenses", variant: "destructive" })
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  function addExpense() {
+    setExpenses([...expenses, { label: "", amount: "", category: "OTHER", isRecurring: false }])
+  }
+
+  function removeExpense(index: number) {
+    setExpenses(expenses.filter((_, i) => i !== index))
+  }
+
+  function updateExpense(index: number, field: keyof ExpenseEntry, value: string | boolean) {
+    const updated = [...expenses]
+    updated[index] = { ...updated[index], [field]: value }
+    setExpenses(updated)
   }
 
   return (
@@ -102,7 +164,7 @@ export function OnboardingWizard() {
               <div>
                 <h2 className="text-2xl font-bold">Bienvenue sur ConciergeFlow</h2>
                 <p className="mt-2 text-muted-foreground">
-                  Suivez vos logements, vos revenus et vos dépenses en un seul endroit.
+                  Suivez vos logements, vos revenus et vos depenses en un seul endroit.
                   Commençons par ajouter votre premier logement.
                 </p>
               </div>
@@ -172,7 +234,7 @@ export function OnboardingWizard() {
                     </Select>
                   </div>
                   <div>
-                    <Label htmlFor="rooms">Pièces</Label>
+                    <Label htmlFor="rooms">Pieces</Label>
                     <Input
                       id="rooms"
                       type="number"
@@ -192,31 +254,112 @@ export function OnboardingWizard() {
                     onChange={(e) => setForm({ ...form, icalUrl: e.target.value })}
                   />
                   <p className="mt-1 text-xs text-muted-foreground">
-                    Trouvez-la dans Airbnb → Votre annonce → Tarifs et disponibilités → Exporter le calendrier
+                    Airbnb &rarr; Votre annonce &rarr; Tarifs et disponibilites &rarr; Exporter le calendrier
                   </p>
                 </div>
               </div>
 
               <Button onClick={handleCreateProperty} disabled={saving} className="w-full bg-amber-500 hover:bg-amber-400">
                 {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                Créer mon logement
+                Creer mon logement
               </Button>
             </CardContent>
           </Card>
         )}
 
-        {/* Step 2: Done */}
+        {/* Step 2: Add expenses for the property */}
         {step === 2 && (
+          <Card>
+            <CardContent className="space-y-5 p-8">
+              <div className="text-center">
+                <h2 className="text-xl font-bold">Ajoutez vos depenses</h2>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Menage, assurance, charges... Ajoutez les depenses liees a <strong>{form.name}</strong>.
+                </p>
+              </div>
+
+              <div className="space-y-3">
+                {expenses.map((expense, i) => (
+                  <div key={i} className="space-y-2 rounded-xl border border-border/40 bg-white/[0.02] p-4">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-medium text-muted-foreground">Depense {i + 1}</span>
+                      {expenses.length > 1 && (
+                        <button onClick={() => removeExpense(i)} className="text-muted-foreground hover:text-destructive">
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      )}
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <Input
+                        placeholder="Ex: Menage"
+                        value={expense.label}
+                        onChange={(e) => updateExpense(i, "label", e.target.value)}
+                      />
+                      <Input
+                        type="number"
+                        placeholder="Montant en euros"
+                        value={expense.amount}
+                        onChange={(e) => updateExpense(i, "amount", e.target.value)}
+                      />
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Select value={expense.category} onValueChange={(v) => updateExpense(i, "category", v)}>
+                        <SelectTrigger className="flex-1">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {Object.entries(categoryLabels).map(([value, label]) => (
+                            <SelectItem key={value} value={value}>{label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <label className="flex items-center gap-1.5 text-xs text-muted-foreground whitespace-nowrap">
+                        <input
+                          type="checkbox"
+                          checked={expense.isRecurring}
+                          onChange={(e) => updateExpense(i, "isRecurring", e.target.checked)}
+                          className="rounded border-border"
+                        />
+                        Recurrente
+                      </label>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <button
+                onClick={addExpense}
+                className="flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-border/60 py-2.5 text-sm text-muted-foreground transition-colors hover:border-amber-500/30 hover:text-amber-400"
+              >
+                <Plus className="h-4 w-4" />
+                Ajouter une depense
+              </button>
+
+              <div className="flex gap-3">
+                <Button variant="outline" onClick={() => setStep(3)} className="flex-1">
+                  Passer cette etape
+                </Button>
+                <Button onClick={handleSaveExpenses} disabled={saving} className="flex-1 bg-amber-500 hover:bg-amber-400">
+                  {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                  Enregistrer
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Step 3: Done */}
+        {step === 3 && (
           <Card>
             <CardContent className="space-y-6 p-8 text-center">
               <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-green-500/15">
                 <CheckCircle className="h-8 w-8 text-green-400" />
               </div>
               <div>
-                <h2 className="text-2xl font-bold">Vous êtes prêt !</h2>
+                <h2 className="text-2xl font-bold">Vous etes pret !</h2>
                 <p className="mt-2 text-muted-foreground">
-                  Votre premier logement est créé. Vous pouvez maintenant
-                  importer vos réservations, ajouter des dépenses, et suivre votre rentabilité.
+                  Votre premier logement est cree{expenses.some((e) => e.label) ? " avec ses depenses" : ""}.
+                  Vous pouvez maintenant suivre votre rentabilite.
                 </p>
               </div>
               <div className="flex gap-3">
