@@ -15,6 +15,11 @@ export async function GET(request: Request) {
   const propertyId = searchParams.get("propertyId")
   const category = searchParams.get("category")
 
+  const validCategories = ["CLEANING", "MAINTENANCE", "SUPPLIES", "RENT", "INSURANCE", "TAX", "PLATFORM_FEE", "UTILITIES", "FURNISHING", "MARKETING", "OTHER"]
+  if (category && !validCategories.includes(category)) {
+    return NextResponse.json({ error: "Invalid category" }, { status: 400 })
+  }
+
   const page = Math.max(0, parseInt(searchParams.get("page") || "0"))
   const limit = Math.min(100, Math.max(1, parseInt(searchParams.get("limit") || "100")))
 
