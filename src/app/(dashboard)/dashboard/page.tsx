@@ -12,6 +12,7 @@ import { RevenueChart } from "@/components/dashboard/revenue-chart"
 import { ProfitabilityTable } from "@/components/dashboard/profitability-table"
 import { SyncButton } from "@/components/dashboard/sync-button"
 import { OnboardingWizard } from "@/components/onboarding/onboarding-wizard"
+import { OnboardingChecklist } from "@/components/onboarding/onboarding-checklist"
 import { PageLoading } from "@/components/ui/page-loading"
 import { PageError } from "@/components/ui/page-error"
 import {
@@ -173,6 +174,9 @@ export default function DashboardPage() {
         onCardClick={(key) => setActiveCard(activeCard === key ? null : key)}
         comparison={data.comparison}
       />
+
+      {/* Checklist onboarding */}
+      <OnboardingChecklist />
 
       {/* Graphe contextuel selon KPI sélectionné */}
       {activeCard === "occupancy" && (
