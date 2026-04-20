@@ -57,17 +57,17 @@ export function RevenueChart({ data }: RevenueChartProps) {
                 <stop offset="100%" stopColor="#7c3aed" stopOpacity={0} />
               </linearGradient>
             </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" strokeOpacity={0.15} />
+            <CartesianGrid strokeDasharray="4 4" stroke="rgba(255,255,255,0.04)" />
             <XAxis
               dataKey="month"
               tickFormatter={formatMonth}
-              stroke="rgba(255,255,255,0.7)"
+              stroke="rgba(255,255,255,0.3)"
               fontSize={12}
               tickLine={false}
               axisLine={false}
             />
             <YAxis
-              stroke="rgba(255,255,255,0.7)"
+              stroke="rgba(255,255,255,0.3)"
               fontSize={12}
               tickLine={false}
               axisLine={false}

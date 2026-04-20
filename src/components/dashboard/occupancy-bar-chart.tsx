@@ -50,11 +50,11 @@ export function OccupancyBarChart({ data }: OccupancyBarChartProps) {
         <div style={{ outline: "none" }} tabIndex={-1}>
           <ResponsiveContainer width="100%" height={Math.max(200, data.length * 48)}>
             <BarChart data={data} layout="vertical" barSize={16}>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" strokeOpacity={0.15} horizontal={false} />
+              <CartesianGrid strokeDasharray="4 4" stroke="rgba(255,255,255,0.04)" horizontal={false} />
               <XAxis
                 type="number"
                 domain={[0, 100]}
-                stroke="rgba(255,255,255,0.7)"
+                stroke="rgba(255,255,255,0.3)"
                 fontSize={12}
                 tickLine={false}
                 axisLine={false}
@@ -63,7 +63,7 @@ export function OccupancyBarChart({ data }: OccupancyBarChartProps) {
               <YAxis
                 type="category"
                 dataKey="name"
-                stroke="rgba(255,255,255,0.7)"
+                stroke="rgba(255,255,255,0.3)"
                 fontSize={12}
                 tickLine={false}
                 axisLine={false}
