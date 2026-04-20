@@ -35,7 +35,7 @@ export function OccupancyBarChart({ data }: OccupancyBarChartProps) {
           <CardTitle className="text-base">Occupation par logement</CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="py-8 text-center text-sm text-muted-foreground">Pas encore de données</p>
+          <div className="flex flex-col items-center gap-2 py-12"><p className="text-sm font-medium">Pas encore de donnees</p><p className="text-xs text-muted-foreground">Les graphiques apparaitront quand vous aurez des reservations et depenses</p></div>
         </CardContent>
       </Card>
     )
