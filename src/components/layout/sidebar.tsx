@@ -10,6 +10,7 @@ import {
   Bell,
   FileText,
   CalendarDays,
+  Settings,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -21,6 +22,7 @@ const navItems = [
   { href: "/expenses", label: "D\u00e9penses", icon: Receipt },
   { href: "/reports", label: "Rapports", icon: FileText },
   { href: "/alerts", label: "Alertes", icon: Bell },
+  { href: "/settings", label: "Parametres", icon: Settings },
 ]
 
 export function Sidebar() {
