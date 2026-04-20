@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { createClient } from "@/lib/supabase/server"
+import { round1 } from "@/lib/utils"
 
 // --- Types partagés pour le dashboard ---
 
@@ -24,10 +25,6 @@ interface PropertyWithRelations {
   expenses: ExpenseRecord[]
 }
 
-// Arrondi à 1 décimale (ex: 82.5)
-function round1(value: number): number {
-  return Math.round(value * 10) / 10
-}
 
 // Nombre de jours dans le mois courant
 function daysInCurrentMonth(): number {
