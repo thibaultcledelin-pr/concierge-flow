@@ -1,19 +1,8 @@
 import jsPDF from "jspdf"
 import autoTable from "jspdf-autotable"
+import { categoryLabels } from "@/lib/constants"
 
 const MONTHS_FR = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"]
-
-const categoryLabels: Record<string, string> = {
-  CLEANING: "Ménage",
-  MAINTENANCE: "Maintenance",
-  SUPPLIES: "Fournitures",
-  INSURANCE: "Assurance",
-  TAX: "Taxes",
-  COMMISSION: "Commission",
-  MORTGAGE: "Crédit",
-  UTILITIES: "Charges",
-  OTHER: "Autre",
-}
 
 function formatDate(date: string): string {
   const d = new Date(date)

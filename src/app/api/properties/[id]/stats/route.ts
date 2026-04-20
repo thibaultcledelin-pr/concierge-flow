@@ -1,10 +1,8 @@
+import { round1 } from "@/lib/utils"
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { createClient } from "@/lib/supabase/server"
 
-function round1(value: number): number {
-  return Math.round(value * 10) / 10
-}
 
 function toMonthKey(date: Date): string {
   return new Date(date).toISOString().slice(0, 7)
