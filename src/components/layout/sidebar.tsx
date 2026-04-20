@@ -9,12 +9,14 @@ import {
   Receipt,
   Bell,
   FileText,
+  CalendarDays,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/properties", label: "Logements", icon: Home },
+  { href: "/calendar", label: "Calendrier", icon: CalendarDays },
   { href: "/revenue", label: "Revenus", icon: DollarSign },
   { href: "/expenses", label: "D\u00e9penses", icon: Receipt },
   { href: "/reports", label: "Rapports", icon: FileText },
