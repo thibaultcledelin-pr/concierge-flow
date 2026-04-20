@@ -173,4 +173,65 @@ describe("Dashboard API", () => {
       expect(febPoint.occupancy).toBe(100)
     }
   })
+
+  describe("comparison", () => {
+    it("includes a comparison object in response", async () => {
+      mockGetUser.mockResolvedValue({ data: { user: { id: "u1" } } })
+      mockPropertyFindMany.mockResolvedValue([])
+      mockExpenseFindMany.mockResolvedValue([])
+
+      const res = await GET(mockRequest())
+      const data = await res.json()
+
+      expect(data).toHaveProperty("comparison")
+      expect(data.comparison).toHaveProperty("totalRevenue")
+      expect(data.comparison).toHaveProperty("occupancyRate")
+    })
+
+    it("computes % variation between current and previous month", async () => {
+      const now = new Date()
+      const thisMonth = new Date(now.getFullYear(), now.getMonth(), 15)
+      const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 15)
+
+      mockGetUser.mockResolvedValue({ data: { user: { id: "u1" } } })
+      mockPropertyFindMany.mockResolvedValue([
+        {
+          id: "p1", name: "Test", city: "Paris",
+          bookings: [
+            { totalAmount: 1000, nights: 5, platform: "AIRBNB", checkIn: thisMonth },
+            { totalAmount: 500, nights: 3, platform: "AIRBNB", checkIn: lastMonth },
+          ],
+          expenses: [],
+        },
+      ])
+      mockExpenseFindMany.mockResolvedValue([])
+
+      const res = await GET(mockRequest())
+      const data = await res.json()
+
+      // Current (1000) vs previous (500) = +100%
+      expect(data.comparison.totalRevenue).toBe(100)
+    })
+
+    it("returns null variation when previous value is 0", async () => {
+      const now = new Date()
+      const thisMonth = new Date(now.getFullYear(), now.getMonth(), 15)
+
+      mockGetUser.mockResolvedValue({ data: { user: { id: "u1" } } })
+      mockPropertyFindMany.mockResolvedValue([
+        {
+          id: "p1", name: "Test", city: "Paris",
+          bookings: [{ totalAmount: 500, nights: 2, platform: "AIRBNB", checkIn: thisMonth }],
+          expenses: [],
+        },
+      ])
+      mockExpenseFindMany.mockResolvedValue([])
+
+      const res = await GET(mockRequest())
+      const data = await res.json()
+
+      // No previous month data → null
+      expect(data.comparison.totalRevenue).toBeNull()
+    })
+  })
 })
