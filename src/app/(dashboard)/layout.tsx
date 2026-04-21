@@ -4,6 +4,7 @@ import { useState } from "react"
 import { Sidebar } from "@/components/layout/sidebar"
 import { Topbar } from "@/components/layout/topbar"
 import { MobileNav } from "@/components/layout/mobile-nav"
+import { useSessionTimeout } from "@/hooks/use-session-timeout"
 
 export default function DashboardLayout({
   children,
@@ -11,6 +12,7 @@ export default function DashboardLayout({
   children: React.ReactNode
 }) {
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
+  useSessionTimeout()
 
   return (
     <div className="flex h-screen overflow-hidden">
