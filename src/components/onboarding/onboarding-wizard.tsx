@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { Home, Receipt, CheckCircle, ArrowRight, Loader2, Plus, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -15,7 +15,20 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { useToast } from "@/hooks/use-toast"
+import { useFormDraft, loadFormDraft, clearFormDraft, hasFormDraft } from "@/hooks/use-form-draft"
 import { categoryLabels } from "@/lib/constants"
+
+const DRAFT_KEY_PROPERTY = "onboarding-property"
+const DRAFT_KEY_EXPENSES = "onboarding-expenses"
+
+interface PropertyDraft {
+  name: string
+  address: string
+  city: string
+  type: string
+  rooms: number
+  icalUrl: string
+}
 
 const STEPS = [
   { icon: Home, label: "Bienvenue" },
@@ -40,25 +53,44 @@ interface ExpenseEntry {
   isRecurring: boolean
 }
 
+const EMPTY_PROPERTY: PropertyDraft = {
+  name: "",
+  address: "",
+  city: "",
+  type: "APARTMENT",
+  rooms: 1,
+  icalUrl: "",
+}
+
+const EMPTY_EXPENSES: ExpenseEntry[] = [
+  { label: "", amount: "", category: "CLEANING", isRecurring: false },
+]
+
 export function OnboardingWizard() {
   const router = useRouter()
   const { toast } = useToast()
   const [step, setStep] = useState(0)
   const [saving, setSaving] = useState(false)
   const [propertyId, setPropertyId] = useState<string | null>(null)
+  const [draftRestored, setDraftRestored] = useState(false)
 
-  const [form, setForm] = useState({
-    name: "",
-    address: "",
-    city: "",
-    type: "APARTMENT",
-    rooms: 1,
-    icalUrl: "",
-  })
+  const [form, setForm] = useState<PropertyDraft>(
+    () => loadFormDraft<PropertyDraft>(DRAFT_KEY_PROPERTY) ?? EMPTY_PROPERTY,
+  )
 
-  const [expenses, setExpenses] = useState<ExpenseEntry[]>([
-    { label: "", amount: "", category: "CLEANING", isRecurring: false },
-  ])
+  const [expenses, setExpenses] = useState<ExpenseEntry[]>(
+    () => loadFormDraft<ExpenseEntry[]>(DRAFT_KEY_EXPENSES) ?? EMPTY_EXPENSES,
+  )
+
+  useEffect(() => {
+    if (hasFormDraft(DRAFT_KEY_PROPERTY) || hasFormDraft(DRAFT_KEY_EXPENSES)) {
+      setDraftRestored(true)
+      setStep(1)
+    }
+  }, [])
+
+  useFormDraft(DRAFT_KEY_PROPERTY, form, { enabled: step === 1 })
+  useFormDraft(DRAFT_KEY_EXPENSES, expenses, { enabled: step === 2 })
 
   async function handleCreateProperty() {
     if (!form.name || !form.address || !form.city) {
@@ -81,6 +113,7 @@ export function OnboardingWizard() {
       if (!res.ok) throw new Error()
       const property = await res.json()
       setPropertyId(property.id)
+      clearFormDraft(DRAFT_KEY_PROPERTY)
       setStep(2)
     } catch {
       toast({ title: "Erreur", description: "Impossible de creer le logement", variant: "destructive" })
@@ -92,6 +125,7 @@ export function OnboardingWizard() {
   async function handleSaveExpenses() {
     const validExpenses = expenses.filter((e) => e.label && e.amount)
     if (validExpenses.length === 0) {
+      clearFormDraft(DRAFT_KEY_EXPENSES)
       setStep(3)
       return
     }
@@ -113,6 +147,7 @@ export function OnboardingWizard() {
           }),
         })
       }
+      clearFormDraft(DRAFT_KEY_EXPENSES)
       setStep(3)
     } catch {
       toast({ title: "Erreur", description: "Impossible de sauvegarder les depenses", variant: "destructive" })
@@ -180,6 +215,12 @@ export function OnboardingWizard() {
         {step === 1 && (
           <Card>
             <CardContent className="space-y-5 p-8">
+              {draftRestored && (
+                <div className="rounded-lg border border-amber-500/20 bg-amber-500/[0.05] px-4 py-3 text-sm">
+                  <span className="font-medium text-amber-400">Brouillon restaure.</span>
+                  <span className="ml-1 text-muted-foreground">Vos donnees sont pre-remplies.</span>
+                </div>
+              )}
               <div className="text-center">
                 <h2 className="text-xl font-bold">Ajoutez votre premier logement</h2>
                 <p className="mt-1 text-sm text-muted-foreground">
