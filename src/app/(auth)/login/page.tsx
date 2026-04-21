@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
@@ -12,10 +12,14 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 
 export default function LoginPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  const info = searchParams.get("timeout") === "1"
+    ? "Vous avez ete deconnecte apres 30 minutes d'inactivite. Vos brouillons ont ete sauvegardes."
+    : null
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -47,6 +51,11 @@ export default function LoginPage() {
       </CardHeader>
       <form onSubmit={handleSubmit}>
         <CardContent className="space-y-4">
+          {info && (
+            <div className="rounded-md bg-amber-500/10 p-3 text-sm text-amber-400">
+              {info}
+            </div>
+          )}
           {error && (
             <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
               {error}
