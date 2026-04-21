@@ -13,6 +13,7 @@ interface Property {
   city: string
   ownerName: string | null
   ownerEmail: string | null
+  hasOwnerEmail?: boolean
 }
 
 export default function ReportsPage() {
@@ -66,9 +67,9 @@ export default function ReportsPage() {
               <CardHeader>
                 <CardTitle className="text-base">{property.name}</CardTitle>
                 <p className="text-xs text-muted-foreground">{property.city}</p>
-                {property.ownerEmail ? (
+                {property.ownerEmail || property.hasOwnerEmail ? (
                   <p className="mt-1 text-xs text-muted-foreground">
-                    Propriétaire : <span className="text-foreground">{property.ownerName || property.ownerEmail}</span>
+                    Propriétaire : <span className="text-foreground">{property.ownerName || "Email configure"}</span>
                   </p>
                 ) : (
                   <p className="mt-1 flex items-center gap-1 text-xs text-yellow-500">
@@ -84,7 +85,7 @@ export default function ReportsPage() {
                   <ReportButton propertyId={property.id} propertyName={property.name} month={lastMonth} />
                   <ReportButton propertyId={property.id} propertyName={property.name} />
                 </div>
-                {property.ownerEmail && (
+                {(property.ownerEmail || property.hasOwnerEmail) && (
                   <div className="space-y-2 border-t border-border pt-2">
                     <p className="text-xs font-medium text-muted-foreground">Envoyer par email</p>
                     <SendReportButton propertyId={property.id} propertyName={property.name} month={currentMonth} />
