@@ -21,6 +21,8 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { ExpenseForm, categoryLabels } from "@/components/expenses/expense-form"
+import { RunRecurringButton } from "@/components/expenses/run-recurring-button"
+import { useToast } from "@/hooks/use-toast"
 import { formatCurrency, formatDate } from "@/lib/utils"
 
 interface Property {
@@ -49,6 +51,7 @@ export default function ExpensesPage() {
   const [filterCategory, setFilterCategory] = useState<string>("all")
   const [formOpen, setFormOpen] = useState(false)
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null)
+  const { toast } = useToast()
 
   const fetchExpenses = useCallback(() => {
     const params = new URLSearchParams()
@@ -78,12 +81,12 @@ export default function ExpensesPage() {
     try {
       const res = await fetch(`/api/expenses/${id}`, { method: "DELETE" })
       if (!res.ok) {
-        alert("Impossible de supprimer cette dépense. Réessayez.")
+        toast({ title: "Erreur", description: "Impossible de supprimer cette dépense", variant: "destructive" })
         return
       }
       setExpenses((prev) => prev.filter((e) => e.id !== id))
     } catch {
-      alert("Erreur réseau. Vérifiez votre connexion.")
+      toast({ title: "Erreur réseau", description: "Vérifiez votre connexion", variant: "destructive" })
     }
   }
 
@@ -104,15 +107,18 @@ export default function ExpensesPage() {
             {expenses.length} dépense{expenses.length !== 1 ? "s" : ""} · {formatCurrency(totalExpenses)}
           </p>
         </div>
-        <Button
-          onClick={() => {
-            setEditingExpense(null)
-            setFormOpen(true)
-          }}
-        >
-          <Plus className="mr-2 h-4 w-4" />
-          Ajouter
-        </Button>
+        <div className="flex items-center gap-2">
+          <RunRecurringButton onDone={() => fetchExpenses()} />
+          <Button
+            onClick={() => {
+              setEditingExpense(null)
+              setFormOpen(true)
+            }}
+          >
+            <Plus className="mr-2 h-4 w-4" />
+            Ajouter
+          </Button>
+        </div>
       </div>
 
       <div className="mb-6 flex flex-wrap gap-3">
@@ -149,19 +155,22 @@ export default function ExpensesPage() {
         <p className="text-sm text-muted-foreground">Chargement...</p>
       ) : expenses.length === 0 ? (
         <Card>
-          <CardContent className="flex flex-col items-center gap-3 py-12">
-            <Receipt className="h-10 w-10 text-muted-foreground" />
-            <p className="text-sm text-muted-foreground">
-              Aucune dépense enregistrée
-            </p>
+          <CardContent className="flex flex-col items-center gap-4 py-16">
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-500/10">
+              <Receipt className="h-7 w-7 text-amber-400" />
+            </div>
+            <div className="text-center">
+              <p className="font-medium">Suivez vos depenses</p>
+              <p className="mt-1 text-sm text-muted-foreground">Ajoutez menage, assurance, charges — pour calculer votre vraie marge nette</p>
+            </div>
             <Button
-              size="sm"
+              className="bg-amber-500 hover:bg-amber-400"
               onClick={() => {
                 setEditingExpense(null)
                 setFormOpen(true)
               }}
             >
-              Ajouter une dépense
+              Ajouter une depense
             </Button>
           </CardContent>
         </Card>

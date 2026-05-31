@@ -1,279 +1,173 @@
-# ARCHITECTURE.md — Documentation technique ConciergeFlow
+# Architecture — ConciergeFlow
 
-> Dernière mise à jour : 2026-04-16 — 73 tests passent
+> Documentation technique. ~12 500 lignes TypeScript · 18 routes API · 11 pages · 217 tests.
 
 ## Vue d'ensemble
 
-ConciergeFlow est un SaaS de suivi de rentabilité pour conciergeries Airbnb/Booking.
-L'app permet d'ajouter des logements, importer les réservations (iCal + CSV), et suivre les revenus.
+ConciergeFlow est une application Next.js 16 full-stack : le même projet sert le front (React) et le back (routes API). L'authentification et la base de données sont gérées par Supabase, l'accès aux données par Prisma.
 
 ```
-Utilisateur
+Visiteur
   │
-  ├─ /login, /register    → Authentification Supabase
+  ├─ /                       Landing page publique
+  ├─ /login, /register       Authentification Supabase
   │
-  └─ /dashboard            → Layout avec sidebar
-      ├─ /properties       → CRUD logements
-      ├─ /revenue          → Import CSV + tableau réservations
-      ├─ /expenses         → (à venir) Saisie dépenses
-      └─ /alerts           → (à venir) Alertes rentabilité
+  └─ /dashboard (protégé)    Layout avec sidebar + topbar
+      ├─ /dashboard          KPIs, graphiques, comparaison mois/mois
+      ├─ /properties         Liste des logements
+      │   ├─ /new            Création
+      │   └─ /[id]           Détail (mini-dashboard) + /edit
+      ├─ /calendar           Vue calendrier des réservations
+      ├─ /revenue            Import CSV + tableau des réservations
+      ├─ /expenses           Dépenses + filtres + récurrence
+      ├─ /reports            Rapports PDF + envoi email
+      ├─ /alerts             Alertes de rentabilité
+      └─ /settings           Profil, conciergerie, sécurité
 ```
 
 ---
 
-## Stack technique
+## Arborescence
 
-| Outil | Rôle |
-|-------|------|
-| **Next.js 16** | Framework React (App Router) |
-| **Supabase** | Auth (email/password + OAuth) + PostgreSQL |
-| **Prisma 7** | ORM, schéma dans `prisma/schema.prisma` |
-| **Tailwind CSS 4** | Styles utilitaires |
-| **shadcn/ui** | Composants UI (Radix primitives) |
-| **Recharts** | Graphiques (pas encore utilisé) |
-| **ical.js** | Parsing calendriers iCal |
-| **Papaparse** | Parsing fichiers CSV |
-| **Vitest** | Tests unitaires + composants |
-
----
-
-## Arborescence des fichiers
-
-### Configuration racine
-
-| Fichier | Ce qu'il fait |
-|---------|---------------|
-| `package.json` | Dépendances + scripts (`dev`, `build`, `test`, `test:run`) |
-| `tsconfig.json` | Config TypeScript, alias `@/*` → `./src/*` |
-| `next.config.ts` | Config Next.js (vide pour l'instant) |
-| `postcss.config.mjs` | PostCSS avec plugin Tailwind |
-| `vitest.config.ts` | Config tests : jsdom, globals, alias, setup file |
-| `prisma.config.ts` | Config Prisma 7 : chemin schema + DATABASE_URL |
-| `prisma/schema.prisma` | Schéma base de données (voir section Données) |
-| `.env.example` | Variables d'environnement requises |
-| `CLAUDE.md` | Instructions pour Claude (mode de travail, règles) |
-| `ROADMAP.md` | Avancement du projet, cases cochées par étape |
-
-### src/lib/ — Utilitaires et logique métier
-
-| Fichier | Ce qu'il fait |
-|---------|---------------|
-| `prisma.ts` | Singleton PrismaClient (évite les connexions multiples en dev) |
-| `supabase/client.ts` | Client Supabase côté navigateur (pour login/register) |
-| `supabase/server.ts` | Client Supabase côté serveur (pour API routes, cookies) |
-| `utils.ts` | `cn()` (classnames), `formatCurrency()`, `formatDate()`, `calculateMargin()`, `calculateNights()` |
-| `validators.ts` | Schémas Zod : `propertySchema`, `expenseSchema`, `bookingSchema` — utilisés côté client ET serveur |
-| `ical-parser.ts` | `parseIcal(data)` → extrait les réservations d'un fichier iCal. `detectPlatform(url)` → Airbnb/Booking/Other |
-| `csv-parser.ts` | `parseAirbnbCsv(data)`, `parseBookingCsv(data)` → parse les CSV de revenus. `detectCsvPlatform(data)` → auto-détection |
-
-### src/middleware.ts — Protection des routes
-
-Intercepte chaque requête :
-- **Non connecté** + route protégée → redirige vers `/login`
-- **Connecté** + `/login` ou `/register` → redirige vers `/dashboard`
-- Gère les cookies Supabase (refresh token)
-
-### src/app/ — Pages et routes
-
-#### Auth (`src/app/(auth)/`)
-
-| Fichier | Ce qu'il fait | Modifie en base |
-|---------|---------------|------------------|
-| `layout.tsx` | Layout centré sans sidebar, logo ConciergeFlow | Non |
-| `login/page.tsx` | Formulaire email + mot de passe → `supabase.auth.signInWithPassword()` | Non (auth Supabase) |
-| `register/page.tsx` | Formulaire nom + email + password + conciergerie → `supabase.auth.signUp()` avec metadata | Non (auth Supabase) |
-| `callback/route.ts` | Échange le code OAuth → session Supabase → redirige `/dashboard` | Non (auth Supabase) |
-
-#### Dashboard (`src/app/(dashboard)/`)
-
-| Fichier | Ce qu'il fait | Modifie en base |
-|---------|---------------|------------------|
-| `layout.tsx` | Layout avec Sidebar + Topbar + MobileNav | Non |
-| `dashboard/page.tsx` | Page d'accueil "Bienvenue sur ConciergeFlow" | Non |
-
-#### Logements (`src/app/(dashboard)/properties/`)
-
-| Fichier | Ce qu'il fait | Modifie en base |
-|---------|---------------|------------------|
-| `page.tsx` | Liste les logements en grille de cards, bouton supprimer | Lit `properties` |
-| `new/page.tsx` | Formulaire création logement | Non (appelle l'API) |
-| `[id]/page.tsx` | Détail d'un logement (type, pièces, surface, loyer, iCal) | Lit `properties` |
-| `[id]/edit/page.tsx` | Formulaire édition pré-rempli | Non (appelle l'API) |
-
-#### Revenus (`src/app/(dashboard)/revenue/`)
-
-| Fichier | Ce qu'il fait | Modifie en base |
-|---------|---------------|------------------|
-| `page.tsx` | Sélecteur logement + import CSV + tableau des réservations | Lit `properties`, `bookings` |
-
-### src/app/api/ — Routes API
-
-Toutes les routes vérifient l'auth Supabase et le ownership (un user ne peut voir/modifier que ses propres données).
-
-#### Properties API
-
-| Route | Méthode | Ce qu'elle fait | Modifie en base |
-|-------|---------|-----------------|------------------|
-| `/api/properties` | GET | Liste les logements du user | Lit `properties` |
-| `/api/properties` | POST | Crée un logement (validation Zod) | **Crée** dans `properties` |
-| `/api/properties/[id]` | GET | Détail d'un logement | Lit `properties` |
-| `/api/properties/[id]` | PUT | Modifie un logement (validation Zod) | **Modifie** dans `properties` |
-| `/api/properties/[id]` | DELETE | Supprime un logement (cascade bookings + expenses) | **Supprime** dans `properties` |
-| `/api/properties/[id]/bookings` | GET | Liste les réservations d'un logement | Lit `bookings` |
-| `/api/properties/[id]/sync-ical` | POST | Fetch les URLs iCal, parse, crée les réservations manquantes | **Crée** dans `bookings` |
-
-#### Revenue API
-
-| Route | Méthode | Ce qu'elle fait | Modifie en base |
-|-------|---------|-----------------|------------------|
-| `/api/revenue/import-csv` | POST | Upload CSV (FormData), parse Airbnb/Booking, crée ou enrichit les bookings | **Crée/Modifie** dans `bookings` |
-
-### src/components/ — Composants réutilisables
-
-#### Layout (`src/components/layout/`)
-
-| Composant | Ce qu'il fait |
-|-----------|---------------|
-| `sidebar.tsx` | Barre latérale fixe (desktop), logo violet, 5 liens nav, item actif en violet |
-| `topbar.tsx` | Barre haute, hamburger (mobile), sélecteur de période, avatar + dropdown déconnexion |
-| `mobile-nav.tsx` | Sheet slide-in (mobile), même navigation que sidebar |
-
-#### Properties (`src/components/properties/`)
-
-| Composant | Ce qu'il fait |
-|-----------|---------------|
-| `property-form.tsx` | Formulaire création/édition logement — react-hook-form + zodResolver. Champs : nom, adresse, ville, type, pièces, surface, loyer, URLs iCal |
-| `ical-import.tsx` | Bouton "Synchroniser iCal" + affichage résultats (créées/ignorées/erreurs) |
-
-#### Revenue (`src/components/revenue/`)
-
-| Composant | Ce qu'il fait |
-|-----------|---------------|
-| `csv-import.tsx` | Upload fichier CSV + sélecteur plateforme (auto/Airbnb/Booking) + résultats import |
-
-#### UI (`src/components/ui/`) — 15 composants shadcn
-
-`alert`, `avatar`, `badge`, `button`, `card`, `dialog`, `dropdown-menu`, `input`, `label`, `select`, `separator`, `sheet`, `table`, `tabs`, `toast`
+```
+src/
+├── app/
+│   ├── (auth)/            login, register, callback
+│   ├── (dashboard)/       11 pages applicatives + layout
+│   ├── api/               18 routes API
+│   └── page.tsx           landing page
+├── components/
+│   ├── ui/                composants shadcn (Radix)
+│   ├── layout/            sidebar, topbar, mobile-nav
+│   ├── dashboard/         cartes KPI, graphiques Recharts, donut
+│   ├── properties/        formulaire logement, import iCal
+│   ├── expenses/          formulaire dépense, génération récurrente
+│   ├── revenue/           import CSV
+│   ├── reports/           génération PDF, boutons rapport/email
+│   └── onboarding/        wizard 4 étapes, checklist
+├── hooks/                 use-toast, use-session-timeout, use-form-draft
+├── lib/                   prisma, supabase, validators, parsers, utils
+└── middleware.ts          protection des routes
+```
 
 ---
 
-## Données (Prisma)
+## Routes API (18)
 
-### Modèles
+Toutes les routes vérifient l'authentification Supabase et la propriété des données (un utilisateur n'accède qu'à ses propres ressources).
+
+### Logements
+| Route | Méthode | Description |
+|-------|---------|-------------|
+| `/api/properties` | GET / POST | Liste (champs sensibles filtrés) / création |
+| `/api/properties/[id]` | GET / PUT / DELETE | Détail / modification / suppression |
+| `/api/properties/[id]/bookings` | GET | Réservations paginées |
+| `/api/properties/[id]/stats` | GET | KPIs + graphique + activité récente |
+| `/api/properties/[id]/sync-ical` | POST | Synchronise les calendriers iCal |
+| `/api/properties/[id]/report` | GET | Données du rapport (filtre `?month=`) |
+| `/api/properties/[id]/send-report` | POST | Envoie le rapport PDF par email |
+
+### Données & analyse
+| Route | Méthode | Description |
+|-------|---------|-------------|
+| `/api/dashboard` | GET | Agrégation KPIs + comparaison mois/mois |
+| `/api/expenses` | GET / POST | Liste filtrée / création |
+| `/api/expenses/[id]` | PUT / DELETE | Modification / suppression |
+| `/api/expenses/run-recurring` | POST | Génère les dépenses récurrentes manquantes |
+| `/api/revenue/import-csv` | POST | Import CSV Airbnb/Booking |
+| `/api/alerts` | GET | Alertes calculées en temps réel |
+| `/api/sync-all` | POST | Sync iCal de tous les logements |
+| `/api/profile` | GET / PUT | Profil utilisateur |
+| `/api/auth/signout` | POST | Déconnexion serveur |
+
+### Tâches planifiées (cron)
+| Route | Fréquence | Description |
+|-------|-----------|-------------|
+| `/api/cron/sync-ical` | chaque heure | Sync iCal de tous les utilisateurs |
+| `/api/cron/recurring-expenses` | chaque jour | Génération des dépenses récurrentes |
+
+Les crons sont protégés par `CRON_SECRET` et déclenchés par Vercel Cron (`vercel.json`).
+
+---
+
+## Modèle de données (Prisma)
 
 ```
 User ──< Property ──< Booking
   │         │
   │         └──< Expense
-  └────────────< Expense (globales)
+  └────────────< Expense (globales, sans logement)
 ```
 
-| Modèle | Table | Rôle | Champs clés |
-|--------|-------|------|-------------|
-| **User** | `users` | Compte utilisateur | email, name, company |
-| **Property** | `properties` | Logement | name, address, city, type, rooms, surface, icalUrl, icalUrlBooking, monthlyRent |
-| **Booking** | `bookings` | Réservation | checkIn, checkOut, nights, totalAmount, netAmount, platform, source, externalId |
-| **Expense** | `expenses` | Dépense | category, label, amount, date, isRecurring, frequency |
-| **Alert** | `alerts` | Alerte rentabilité | type, message, severity, isRead |
+| Modèle | Champs clés |
+|--------|-------------|
+| **User** | email, name, company |
+| **Property** | name, address, city, type, rooms, surface, icalUrl, icalUrlBooking, monthlyRent, ownerName, ownerEmail |
+| **Booking** | checkIn, checkOut, nights, totalAmount, netAmount, platform, source, externalId |
+| **Expense** | category, label, amount, date, isRecurring, frequency, notes |
 
-### Enums
-
-| Enum | Valeurs |
-|------|---------|
-| PropertyType | APARTMENT, HOUSE, STUDIO, LOFT, VILLA, OTHER |
-| Platform | AIRBNB, BOOKING, DIRECT, OTHER |
-| BookingSource | ICAL, MANUAL, CSV |
-| ExpenseCategory | CLEANING, MAINTENANCE, SUPPLIES, RENT, INSURANCE, TAX, PLATFORM_FEE, UTILITIES, FURNISHING, MARKETING, OTHER |
-| Frequency | WEEKLY, MONTHLY, QUARTERLY, YEARLY |
-| AlertType | LOW_MARGIN, HIGH_EXPENSE, NO_BOOKING, NEGATIVE_PROFIT |
-| Severity | INFO, WARNING, CRITICAL |
-
-### Flux de données
+### Flux des données
 
 ```
-iCal (Airbnb/Booking)              CSV (Airbnb/Booking)
-  │                                   │
-  ▼                                   ▼
-parseIcal()                      parseAirbnbCsv() / parseBookingCsv()
-  │                                   │
-  ▼                                   ▼
-Booking (totalAmount=0)          Booking (totalAmount=450€)
-  │                                   │
-  └──── matching par dates+platform ──┘
+iCal (Airbnb/Booking)            CSV (Airbnb/Booking)
+  │                                │
+  ▼                                ▼
+parseIcal()                  parseAirbnbCsv() / parseBookingCsv()
+  │                                │
+  ▼                                ▼
+Booking (montant = 0)        Booking (montant = 450 €)
+  │                                │
+  └──── matching dates+plateforme ─┘
               │
               ▼
         Booking enrichi (montant ajouté)
 ```
 
-**Pourquoi iCal + CSV ?**
-Les calendriers iCal donnent les dates et noms des voyageurs, mais PAS les montants.
-Les CSV exportés depuis les dashboards Airbnb/Booking contiennent les montants.
-→ On synchronise d'abord les iCal (dates), puis on enrichit avec les CSV (montants).
+Les calendriers iCal fournissent les **dates** mais pas les montants ; les CSV plateformes fournissent les **montants**. ConciergeFlow synchronise d'abord les iCal, puis enrichit avec les CSV.
 
 ---
 
-## Comment lancer le projet
+## Bibliothèque (`src/lib/`)
+
+| Fichier | Rôle |
+|---------|------|
+| `prisma.ts` | Singleton PrismaClient (adapter PrismaPg) |
+| `supabase/client.ts` / `server.ts` | Clients Supabase navigateur / serveur |
+| `validators.ts` | Schémas Zod partagés client + serveur |
+| `ical-parser.ts` | `parseIcal()`, `detectPlatform()` |
+| `csv-parser.ts` | Parsers CSV Airbnb / Booking |
+| `chart-utils.ts` | Constantes & styles partagés des graphiques |
+| `constants.ts` | Libellés catégories, fréquences, types de logement |
+| `data-filter.ts` | Filtrage des champs sensibles des réponses API |
+| `url-validator.ts` | Validation anti-SSRF des URLs iCal |
+| `sanitize.ts` | Échappement HTML pour les emails |
+| `rate-limit.ts` | Limiteur de requêtes en mémoire |
+| `utils.ts` | `formatCurrency()`, `formatDate()`, `round1()`, `calculateNights()` |
+
+---
+
+## Tests (217)
+
+Chaque feature a ses tests colocalisés dans un dossier `__tests__/`.
+
+- **Routes API** : auth, validation, propriété des données, cas limites (division par zéro, mois sans données…)
+- **Composants** : rendu, interactions, formulaires
+- **Parsers** : iCal, CSV (cas normaux + cas dégradés)
+- **Sécurité** : SSRF, open redirect, sanitization
 
 ```bash
-# 1. Installer les dépendances
-npm install
-
-# 2. Configurer les variables d'environnement
-cp .env.example .env
-# Remplir : NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, DATABASE_URL
-
-# 3. Générer le client Prisma
-npx prisma generate
-
-# 4. Appliquer les migrations (quand connecté à Supabase)
-npx prisma migrate dev
-
-# 5. Lancer le serveur de dev
-npm run dev
-# → http://localhost:3000
-
-# 6. Lancer les tests
-npm run test:run    # une seule fois
-npm run test        # mode watch
+npm test        # 217 tests, ~25s
 ```
 
----
-
-## Tests — 73 passent (14 fichiers)
-
-| Domaine | Fichier | Tests |
-|---------|---------|-------|
-| Auth | `login.test.tsx` | 4 — rendu form, lien register, erreur, redirect |
-| Auth | `register.test.tsx` | 5 — rendu form, lien login, erreur, metadata, redirect |
-| Auth | `callback.test.ts` | 4 — échange code, redirect custom, fallback login |
-| Layout | `sidebar.test.tsx` | 4 — branding, 5 items, hrefs, violet active |
-| Layout | `topbar.test.tsx` | 4 — menu mobile, avatar, sélecteur période, callback |
-| Layout | `mobile-nav.test.tsx` | 2 — items rendus, branding |
-| Properties API | `route.test.ts` | 5 — 401, GET list, POST 400, POST 201 |
-| Properties Form | `property-form.test.tsx` | 7 — champs, type select, titres, boutons |
-| iCal Parser | `ical-parser.test.ts` | 9 — parse events, guest, nights, externalId, dates, empty, platforms |
-| iCal API | `sync-ical/route.test.ts` | 5 — 401, 404, 400, create, dedup |
-| iCal Component | `ical-import.test.tsx` | 3 — no URL message, button, clickable |
-| CSV Parser | `csv-parser.test.ts` | 14 — Airbnb rows/guest/amounts/net/platform/nights, Booking rows/guest/total/net/platform, detect |
-| CSV API | `import-csv/route.test.ts` | 4 — 401, 400 no file, create, enrich existing |
-| CSV Component | `csv-import.test.tsx` | 3 — file input, platform selector, disabled button |
+CI GitHub Actions : `npm ci` → `npm test` → `npm run lint` à chaque pull request.
 
 ---
 
-## Ce qui reste à faire
+## Ajouter une fonctionnalité
 
-Voir `ROADMAP.md` pour le détail. En résumé :
-
-| Étape | Statut | Description |
-|-------|--------|-------------|
-| 1.0 Setup | ✅ | Stack, Prisma, shadcn, config |
-| 1.1 Auth | ✅ | Login, register, callback, middleware |
-| 1.2 Layout | ✅ | Sidebar, topbar, mobile-nav |
-| 2.0 CRUD logements | ✅ | API + form + 4 pages |
-| 2.1 Import iCal | ✅ | Parser + sync API + dédoublonnage |
-| 2.2 Import CSV | ✅ | Parser Airbnb/Booking + enrichissement |
-| **3.0 Dépenses** | ⏳ | API CRUD + form + page filtres |
-| **3.1 Dashboard** | ⏳ | KPIs, graphiques Recharts, table rentabilité |
-| 4.0 Calculateur | ⏳ | Page publique gratuite |
-| 4.1 Polish | ⏳ | Responsive, loading states, toasts, 404 |
-| 4.2 Déploiement | ⏳ | Vercel + env prod |
+1. Créer une branche : `git checkout -b feat/ma-feature`
+2. **Route API** : créer `src/app/api/.../route.ts`, vérifier l'auth + la propriété en début de handler, ajouter les tests dans `__tests__/`
+3. **Composant** : créer dans `src/components/[feature]/`, réutiliser les composants shadcn
+4. **Page** : créer dans `src/app/(dashboard)/`, ajouter le lien dans `sidebar.tsx`
+5. Lancer `npm test && npm run lint` avant de pousser
+6. Ouvrir une PR — la CI valide automatiquement

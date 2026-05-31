@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { createClient } from "@/lib/supabase/server"
 import { parseIcal, detectPlatform } from "@/lib/ical-parser"
+import { isAllowedUrl } from "@/lib/url-validator"
 
 export async function POST(
   _request: Request,
@@ -21,18 +22,6 @@ export async function POST(
 
   if (!property) {
     return NextResponse.json({ error: "Not found" }, { status: 404 })
-  }
-
-  function isAllowedUrl(url: string): boolean {
-    try {
-      const parsed = new URL(url)
-      if (parsed.protocol !== "https:") return false
-      const host = parsed.hostname.toLowerCase()
-      if (host === "localhost" || host === "127.0.0.1" || host.startsWith("192.168.") || host.startsWith("10.") || host === "0.0.0.0") return false
-      return true
-    } catch {
-      return false
-    }
   }
 
   const urls: { url: string; platform: "AIRBNB" | "BOOKING" | "OTHER" }[] = []
@@ -67,17 +56,10 @@ export async function POST(
       const bookings = parseIcal(icalData)
 
       for (const booking of bookings) {
-        const existing = await prisma.booking.findUnique({
+        const result = await prisma.booking.upsert({
           where: { externalId: booking.externalId },
-        })
-
-        if (existing) {
-          skipped++
-          continue
-        }
-
-        await prisma.booking.create({
-          data: {
+          update: {},
+          create: {
             propertyId: property.id,
             guestName: booking.guestName,
             checkIn: booking.checkIn,
@@ -89,7 +71,11 @@ export async function POST(
             externalId: booking.externalId,
           },
         })
-        created++
+        if (result.createdAt.getTime() > Date.now() - 5000) {
+          created++
+        } else {
+          skipped++
+        }
       }
     } catch (err) {
       console.error(`[sync-ical] Error processing ${platform} iCal for property ${property.id}:`, err)

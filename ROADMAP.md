@@ -1,128 +1,77 @@
-# ROADMAP.md — État d'avancement
+# Roadmap — ConciergeFlow
 
-> Reprends là où le statut indique "EN COURS" ou "À FAIRE".
-> Ne propose jamais de refaire une étape marquée "FAIT".
-
-## Statut actuel
-📍 **Dernière session** : 2026-04-16
-🔧 **Étape en cours** : Déploiement Vercel
+> État d'avancement du projet. ✅ fait · 🔧 en cours · ⏳ à venir
 
 ---
 
-## Semaine 1 — Fondations
+## ✅ Fondations
+- Setup Next.js 16 + TypeScript + Tailwind + shadcn/ui
+- Base PostgreSQL (Supabase) + Prisma 7
+- Authentification (login, register, callback, déconnexion)
+- Middleware de protection des routes
+- Layout dashboard (sidebar, topbar, navigation mobile)
+- CI GitHub Actions (tests + lint)
 
-### 1.0 Setup projet
-- [x] Init Next.js
-- [x] Dépendances installées
-- [x] shadcn/ui configuré (Radix + Nova)
-- [x] Prisma init + schéma complet
-- [x] Fichiers lib/ créés (prisma, supabase, utils, validators)
-- [x] Middleware auth créé
-- [x] .env.example créé
-- [x] CLAUDE.md + ROADMAP.md créés
-- [x] npm run dev fonctionne
-- [x] Premier commit
+## ✅ Gestion des logements
+- CRUD complet (création, liste, détail, édition, suppression)
+- Page détail = mini-dashboard par logement
+- Champs propriétaire (nom + email pour les rapports)
 
-### 1.1 Auth
-- [x] Page /login
-- [x] Page /register
-- [x] Route /callback
-- [x] Layout auth (centré, sans sidebar)
-- [x] Tests auth ✅ 13/13
+## ✅ Import des données
+- Parser iCal (Airbnb + Booking) + détection de plateforme
+- Synchronisation iCal en un clic + automatique chaque heure
+- Import CSV avec matching intelligent (enrichissement des montants)
+- Dédoublonnage des réservations
 
-### 1.2 Layout app
-- [x] Sidebar (violet active state, icônes Lucide)
-- [x] Topbar (avatar, sélecteur période, déconnexion)
-- [x] MobileNav (Sheet responsive)
-- [x] Layout dashboard
-- [x] README.md mis à jour
-- [x] Tests layout ✅ 10/10
+## ✅ Suivi financier
+- Dépenses catégorisées avec filtres
+- Dépenses récurrentes (hebdo / mensuel / trimestriel / annuel) + génération automatique
+- Dashboard : 6 KPIs cliquables, donut occupation, comparaison mois/mois
+- Graphiques : occupation, revenus vs dépenses, revenu/nuit, occupation par logement
+- Sélecteur de logement (filtre tout le dashboard)
+- Vue calendrier des réservations
 
-## Semaine 2 — Logements + données
+## ✅ Rapports & alertes
+- Rapports propriétaire en PDF (résumé financier, réservations, dépenses)
+- Envoi des rapports par email (Resend)
+- Alertes intelligentes (marge négative, occupation basse, etc.)
 
-### 2.0 CRUD logements
-- [x] API routes (GET, POST, PUT, DELETE)
-- [x] PropertyForm (react-hook-form + Zod)
-- [x] Pages (liste cards, new, detail, edit)
-- [x] Validation Zod côté serveur
-- [x] Tests properties ✅ 11/11
+## ✅ Expérience utilisateur
+- Onboarding wizard en 4 étapes (logement + dépenses)
+- Checklist de progression sur le dashboard
+- Empty states avec guidage et boutons d'action
+- Page paramètres (profil, conciergerie, mot de passe, export, suppression)
+- Design dark mode (palette ambre/orange)
 
-### 2.1 Import iCal
-- [x] API sync-ical (POST /api/properties/[id]/sync-ical)
-- [x] Parser ical.js (parseIcal + detectPlatform)
-- [x] Dédoublonnage externalId
-- [x] Composant IcalImport
-- [x] Tests iCal ✅ 17/17
-
-### 2.2 Import CSV
-- [x] Parser CSV Airbnb (Papaparse)
-- [x] Parser CSV Booking
-- [x] Matching avec bookings existants
-- [x] Composant CsvImport
-- [x] Page /revenue
-- [x] Tests CSV ✅ 21/21
-
-## Semaine 3 — Dépenses + dashboard
-
-### 3.0 Dépenses
-- [x] API CRUD expenses (GET avec filtres, POST, PUT, DELETE)
-- [x] ExpenseForm (dialog, catégories, récurrent, sélecteur logement)
-- [x] Page /expenses (filtres logement + catégorie, tableau, edit/delete)
-- [x] Dépenses récurrentes (checkbox + fréquence)
-- [x] Tests expenses ✅ 13/13
-
-### 3.1 Dashboard
-- [x] API /api/dashboard (agrégation revenus, dépenses, marge, occupation)
-- [x] StatsCards (4 KPIs)
-- [x] RevenueChart (Recharts AreaChart animé)
-- [x] ProfitabilityTable (trié par marge, couleur vert/jaune/rouge)
-- [x] Répartition par plateforme (PieChart)
-- [x] Page /dashboard assemblée
-- [x] Tests dashboard ✅ 9/9
-
-### Audit sécurité
-- [x] Protection SSRF + error sanitization + CSV 5MB limit + HTTPS URLs
-- [x] Tests edge cases ✅ 37/37
-- [x] Total : 134 tests passent
-
-## Semaine 4 — Polish + déploiement
-
-### 4.1 Polish
-- [x] Toast notifications (création, modification, suppression, import)
-- [x] Loading states avec skeleton (dashboard, properties)
-- [x] Error states avec bouton retry
-- [x] Page 404 custom dark mode
-- [x] Meta tags Open Graph + Twitter
-- [x] Responsive mobile (flex-wrap, truncate, min-w-0)
-
-### 4.2 Déploiement
-- [x] npm run build compile (ignoreBuildErrors pour Prisma 7 .ts)
-- [x] postinstall: prisma generate
-- [x] next.config.ts prêt pour Vercel
-- [x] .env.example à jour
-- [ ] Déployer sur Vercel
-- [ ] Connecter Supabase
-- [ ] Test en prod
+## ✅ Sécurité & qualité
+- Audit sécurité (SSRF, open redirect, fuite de données)
+- Headers de sécurité HTTP (CSP, HSTS, X-Frame-Options…)
+- Sanitization HTML des emails
+- Filtrage des champs sensibles des réponses API
+- Déconnexion automatique après 30 min + sauvegarde des brouillons
+- 217 tests automatisés
 
 ---
 
-## Erreurs et solutions
+## 🔧 En cours
+- **Déploiement Vercel** + connexion Supabase production
+- Validation du design en conditions réelles
 
-| Date | Problème | Solution |
-|------|----------|----------|
-| 2026-04-16 | shadcn registry blocked | Created components manually |
-| 2026-04-16 | Prisma 7 url/directUrl removed from schema | Moved to prisma.config.ts |
-| 2026-04-16 | git push CLI 403 | Used GitHub MCP API push_files |
-| 2026-04-16 | Turbopack can't resolve Prisma 7 .ts files | Import from @/generated/prisma/client directly |
-| 2026-04-16 | Recharts Tooltip types incompatible v3 | Cast any on formatter/labelFormatter |
-| 2026-04-16 | Zod v4 + hookform resolver conflict | Cast any on zodResolver |
+## ⏳ Prochaines étapes
+- Nom & logo définitifs (Voltaflow ?)
+- Stripe — abonnement et facturation
+- Recherche globale (Cmd+K)
+- Notifications email (résumé hebdomadaire)
+- Application mobile / PWA
 
-## Notes de session
+---
 
-### Session 1 — 2026-04-16
-- Semaine 1 : Setup, Auth, Layout
-- Semaine 2 : CRUD logements, Import iCal, Import CSV
-- Semaine 3 : Dépenses, Dashboard, Audit sécurité
-- Semaine 4 : Polish (toasts, loading, error, 404, meta) + Build fixes
-- Total : 134 tests, ~7500 lignes de code
-- Prêt pour déploiement Vercel
+## Notes techniques
+
+| Sujet | Décision |
+|-------|----------|
+| Prisma 7 | Generator `prisma-client-js` + adapter `PrismaPg` |
+| Occupation | Calculée sur le mois courant uniquement, plafonnée à 100 % |
+| Recharts | Overrides CSS hors `@layer` pour priorité maximale |
+| Déconnexion | `window.location.href` (vide le cache client) |
+| Tests | Colocalisés, pas de fichiers regression séparés |

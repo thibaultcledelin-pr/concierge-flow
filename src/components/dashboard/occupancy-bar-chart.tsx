@@ -7,12 +7,10 @@ import {
   XAxis,
   YAxis,
   CartesianGrid,
-  Tooltip,
   Cell,
   LabelList,
 } from "recharts"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { TOOLTIP_STYLE } from "@/lib/chart-utils"
 
 interface OccupancyBarData {
   name: string
@@ -37,7 +35,7 @@ export function OccupancyBarChart({ data }: OccupancyBarChartProps) {
           <CardTitle className="text-base">Occupation par logement</CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="py-8 text-center text-sm text-muted-foreground">Pas encore de données</p>
+          <div className="flex flex-col items-center gap-2 py-12"><p className="text-sm font-medium">Pas encore de donnees</p><p className="text-xs text-muted-foreground">Les graphiques apparaitront quand vous aurez des reservations et depenses</p></div>
         </CardContent>
       </Card>
     )
@@ -49,49 +47,45 @@ export function OccupancyBarChart({ data }: OccupancyBarChartProps) {
         <CardTitle className="text-base">Occupation par logement</CardTitle>
       </CardHeader>
       <CardContent>
-        <ResponsiveContainer width="100%" height={Math.max(200, data.length * 48)}>
-          <BarChart data={data} layout="vertical" barSize={16}>
-            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" strokeOpacity={0.15} horizontal={false} />
-            <XAxis
-              type="number"
-              domain={[0, 100]}
-              stroke="rgba(255,255,255,0.7)"
-              fontSize={12}
-              tickLine={false}
-              axisLine={false}
-              tickFormatter={(v: number) => `${v}%`}
-            />
-            <YAxis
-              type="category"
-              dataKey="name"
-              stroke="rgba(255,255,255,0.7)"
-              fontSize={12}
-              tickLine={false}
-              axisLine={false}
-              width={120}
-            />
-            <Tooltip
-              cursor={false}
-              contentStyle={TOOLTIP_STYLE}
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              formatter={(value: any) => [`${Number(value).toFixed(1)}%`, "Occupation"]}
-            />
-            <Bar dataKey="occupancy" radius={[0, 6, 6, 0]} animationDuration={1400} animationEasing="ease-out">
-              <LabelList
-                dataKey="occupancy"
-                position="right"
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                formatter={(v: any) => `${Number(v).toFixed(1)}%`}
-                fill="rgba(255,255,255,0.85)"
+        <div style={{ outline: "none" }} tabIndex={-1}>
+          <ResponsiveContainer width="100%" height={Math.max(200, data.length * 48)}>
+            <BarChart data={data} layout="vertical" barSize={16}>
+              <CartesianGrid strokeDasharray="4 4" stroke="rgba(255,255,255,0.04)" horizontal={false} />
+              <XAxis
+                type="number"
+                domain={[0, 100]}
+                stroke="rgba(255,255,255,0.3)"
                 fontSize={12}
-                fontWeight={600}
+                tickLine={false}
+                axisLine={false}
+                tickFormatter={(v: number) => `${v}%`}
               />
-              {data.map((entry) => (
-                <Cell key={entry.name} fill={getBarColor(entry.occupancy)} />
-              ))}
-            </Bar>
-          </BarChart>
-        </ResponsiveContainer>
+              <YAxis
+                type="category"
+                dataKey="name"
+                stroke="rgba(255,255,255,0.3)"
+                fontSize={12}
+                tickLine={false}
+                axisLine={false}
+                width={120}
+              />
+              <Bar dataKey="occupancy" radius={[0, 6, 6, 0]} animationDuration={1400} animationEasing="ease-out">
+                <LabelList
+                  dataKey="occupancy"
+                  position="right"
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  formatter={(v: any) => `${Number(v).toFixed(1)}%`}
+                  fill="rgba(255,255,255,0.85)"
+                  fontSize={12}
+                  fontWeight={600}
+                />
+                {data.map((entry) => (
+                  <Cell key={entry.name} fill={getBarColor(entry.occupancy)} />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
       </CardContent>
     </Card>
   )

@@ -30,9 +30,9 @@ describe("Sidebar", () => {
     expect(screen.getByText("Alertes").closest("a")).toHaveAttribute("href", "/alerts")
   })
 
-  it("highlights active nav item in violet", () => {
+  it("highlights active nav item with accent color", () => {
     render(<Sidebar />)
     const dashboardLink = screen.getByText("Dashboard").closest("a")
-    expect(dashboardLink?.className).toContain("text-violet-400")
+    expect(dashboardLink?.className).toContain("text-amber-400")
   })
 })

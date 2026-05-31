@@ -102,10 +102,15 @@ export default function PropertiesPage() {
         <PageError message="Impossible de charger les logements" onRetry={retryFetch} />
       ) : properties.length === 0 ? (
         <Card>
-          <CardContent className="flex flex-col items-center gap-3 py-12">
-            <Home className="h-10 w-10 text-muted-foreground" />
-            <p className="text-sm text-muted-foreground">Aucun logement pour le moment</p>
-            <Button asChild size="sm">
+          <CardContent className="flex flex-col items-center gap-4 py-16">
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-500/10">
+              <Home className="h-7 w-7 text-amber-400" />
+            </div>
+            <div className="text-center">
+              <p className="font-medium">Ajoutez votre premier logement</p>
+              <p className="mt-1 text-sm text-muted-foreground">Commencez par ajouter un logement pour suivre sa rentabilite</p>
+            </div>
+            <Button asChild className="bg-amber-500 hover:bg-amber-400">
               <Link href="/properties/new">Ajouter un logement</Link>
             </Button>
           </CardContent>
