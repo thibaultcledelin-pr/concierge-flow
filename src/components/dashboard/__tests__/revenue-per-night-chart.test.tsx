@@ -10,13 +10,13 @@ const sampleData = [
 describe("RevenuePerNightChart", () => {
   it("affiche un état vide sans données", () => {
     render(<RevenuePerNightChart data={[]} propertyNames={[]} />)
-    expect(screen.getByText("Pas encore de données")).toBeInTheDocument()
+    expect(screen.getByText("Pas encore de donnees")).toBeInTheDocument()
   })
 
   it("affiche le graphique quand il y a des données", () => {
     render(<RevenuePerNightChart data={sampleData} propertyNames={["Studio", "Villa"]} />)
     expect(screen.getByText("Revenu net / nuitée")).toBeInTheDocument()
     // Pas l'état vide
-    expect(screen.queryByText("Pas encore de données")).not.toBeInTheDocument()
+    expect(screen.queryByText("Pas encore de donnees")).not.toBeInTheDocument()
   })
 })

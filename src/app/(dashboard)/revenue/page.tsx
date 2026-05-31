@@ -139,9 +139,10 @@ export default function RevenuePage() {
             </CardHeader>
             <CardContent>
               {bookings.length === 0 ? (
-                <p className="py-4 text-center text-sm text-muted-foreground">
-                  Aucune réservation. Synchronisez le iCal ou importez un CSV.
-                </p>
+                <div className="flex flex-col items-center gap-3 py-12">
+                  <p className="font-medium">Aucune reservation pour ce logement</p>
+                  <p className="text-sm text-muted-foreground">Configurez l&apos;URL iCal dans les parametres du logement, ou importez un fichier CSV ci-dessus</p>
+                </div>
               ) : (
                 <Table>
                   <TableHeader>

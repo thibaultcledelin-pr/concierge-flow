@@ -6,6 +6,7 @@ const mockPush = vi.fn()
 const mockRefresh = vi.fn()
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: mockPush, refresh: mockRefresh }),
+  useSearchParams: () => ({ get: () => null }),
 }))
 
 const mockSignIn = vi.fn()
@@ -50,6 +51,17 @@ describe("LoginPage", () => {
     await waitFor(() => {
       expect(screen.getByText("Invalid credentials")).toBeInTheDocument()
     })
+  })
+
+  it("does not call setLoading(false) after router.push", async () => {
+    const { readFileSync } = await import("fs")
+    const source = readFileSync("src/app/(auth)/login/page.tsx", "utf-8")
+    const afterPush = source.slice(source.indexOf("router.push"))
+    const nextSetLoading = afterPush.indexOf("setLoading(false)")
+    const functionEnd = afterPush.indexOf("}")
+    if (nextSetLoading !== -1) {
+      expect(nextSetLoading).toBeGreaterThan(functionEnd)
+    }
   })
 
   it("redirects to dashboard on successful login", async () => {

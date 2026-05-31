@@ -207,6 +207,35 @@ export function PropertyForm({ defaultValues, propertyId }: PropertyFormProps) {
               />
             </div>
           </div>
+
+          <div className="grid grid-cols-1 gap-4 border-t border-border pt-6 sm:grid-cols-2">
+            <div className="space-y-2 sm:col-span-2">
+              <p className="text-sm font-medium">Propriétaire (optionnel)</p>
+              <p className="text-xs text-muted-foreground">
+                Pour envoyer les rapports mensuels par email directement au propriétaire du logement.
+              </p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="ownerName">Nom du propriétaire</Label>
+              <Input
+                id="ownerName"
+                placeholder="Jean Dupont"
+                {...register("ownerName")}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="ownerEmail">Email du propriétaire</Label>
+              <Input
+                id="ownerEmail"
+                type="email"
+                placeholder="jean.dupont@example.com"
+                {...register("ownerEmail")}
+              />
+              {errors.ownerEmail && (
+                <p className="text-sm text-destructive">{errors.ownerEmail.message}</p>
+              )}
+            </div>
+          </div>
         </CardContent>
         <CardFooter className="flex gap-3">
           <Button type="submit" disabled={loading}>
