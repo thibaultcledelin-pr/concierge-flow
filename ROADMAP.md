@@ -41,6 +41,7 @@
 - Checklist de progression sur le dashboard
 - Empty states avec guidage et boutons d'action
 - Page paramètres (profil, conciergerie, mot de passe, export, suppression)
+- Recherche globale (Cmd+K) — saut rapide vers les pages et les logements
 - Design dark mode (palette ambre/orange)
 
 ## ✅ Sécurité & qualité
@@ -60,7 +61,6 @@
 ## ⏳ Prochaines étapes
 - Nom & logo définitifs (Voltaflow ?)
 - Stripe — abonnement et facturation
-- Recherche globale (Cmd+K)
 - Notifications email (résumé hebdomadaire)
 - Application mobile / PWA
 
