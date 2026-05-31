@@ -50,7 +50,7 @@ export function RevenuePerNightChart({ data, propertyNames }: RevenuePerNightCha
     return (
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Revenu net / nuitée</CardTitle>
+          <CardTitle className="text-base">Revenu / nuitée</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex flex-col items-center gap-2 py-12">
@@ -67,7 +67,7 @@ export function RevenuePerNightChart({ data, propertyNames }: RevenuePerNightCha
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base">Revenu net / nuitée</CardTitle>
+        <CardTitle className="text-base">Revenu / nuitée</CardTitle>
       </CardHeader>
       <CardContent>
         <div style={{ outline: "none" }} tabIndex={-1}>
