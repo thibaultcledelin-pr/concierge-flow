@@ -1,12 +1,18 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { StatsCards } from "@/components/dashboard/stats-cards"
+import Link from "next/link"
+import { Plus } from "lucide-react"
+import { StatsCards, type KpiKey, type StatsComparison } from "@/components/dashboard/stats-cards"
 import { OccupancyChart } from "@/components/dashboard/occupancy-chart"
+import { OccupationDonut } from "@/components/dashboard/occupation-donut"
 import { RevenuePerNightChart } from "@/components/dashboard/revenue-per-night-chart"
 import { OccupancyBarChart } from "@/components/dashboard/occupancy-bar-chart"
 import { RevenueChart } from "@/components/dashboard/revenue-chart"
 import { ProfitabilityTable } from "@/components/dashboard/profitability-table"
+import { SyncButton } from "@/components/dashboard/sync-button"
+import { OnboardingWizard } from "@/components/onboarding/onboarding-wizard"
+import { OnboardingChecklist } from "@/components/onboarding/onboarding-checklist"
 import { PageLoading } from "@/components/ui/page-loading"
 import { PageError } from "@/components/ui/page-error"
 import {
@@ -47,6 +53,7 @@ interface DashboardData {
   occupancyByProperty: { name: string; occupancy: number }[]
   platformData: { name: string; value: number }[]
   allProperties: { id: string; name: string }[]
+  comparison?: StatsComparison
 }
 
 export default function DashboardPage() {
@@ -54,6 +61,7 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
   const [selectedProperty, setSelectedProperty] = useState<string>("all")
+  const [activeCard, setActiveCard] = useState<KpiKey | null>(null)
 
   function loadDashboard(propertyId: string, signal?: AbortSignal) {
     const url = propertyId !== "all"
@@ -111,6 +119,11 @@ export default function DashboardPage() {
     )
   }
 
+  // Onboarding si aucun logement
+  if (data.allProperties.length === 0) {
+    return <OnboardingWizard />
+  }
+
   const selectedPropertyName = selectedProperty !== "all"
     ? data.allProperties.find((p) => p.id === selectedProperty)?.name
     : undefined
@@ -124,19 +137,29 @@ export default function DashboardPage() {
             Vue d&apos;ensemble — {data.stats.propertyCount} logement{data.stats.propertyCount !== 1 ? "s" : ""}
           </p>
         </div>
-        {data.allProperties.length > 1 && (
-          <Select value={selectedProperty} onValueChange={handlePropertyChange}>
-            <SelectTrigger className="w-[220px]">
-              <SelectValue placeholder="Tous les logements" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Tous les logements</SelectItem>
-              {data.allProperties.map((p) => (
-                <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        )}
+        <div className="flex items-center gap-3">
+          {data.allProperties.length > 1 && (
+            <Select value={selectedProperty} onValueChange={handlePropertyChange}>
+              <SelectTrigger className="w-[220px]">
+                <SelectValue placeholder="Tous les logements" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Tous les logements</SelectItem>
+                {data.allProperties.map((p) => (
+                  <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+          <SyncButton />
+          <Link
+            href="/properties/new"
+            className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-amber-500 to-orange-600 px-4 py-2 text-sm font-medium text-white transition-all hover:from-amber-400 hover:to-orange-500 shadow-sm shadow-amber-500/20"
+          >
+            <Plus className="h-4 w-4" />
+            <span className="hidden sm:inline">Ajouter un logement</span>
+          </Link>
+        </div>
       </div>
 
       <StatsCards
@@ -147,21 +170,58 @@ export default function DashboardPage() {
         adr={data.stats.adr}
         totalRevenue={data.stats.totalRevenue}
         propertyName={selectedPropertyName}
+        activeCard={activeCard}
+        onCardClick={(key) => setActiveCard(activeCard === key ? null : key)}
+        comparison={data.comparison}
       />
 
-      {/* Graphe 1 — Taux d'occupation (pleine largeur) */}
-      <OccupancyChart data={data.occupancyData} />
+      {/* Checklist onboarding */}
+      <OnboardingChecklist />
 
-      {/* Graphes 2 + 3 côte à côte */}
-      <div className="grid gap-6 lg:grid-cols-3">
-        <div className="lg:col-span-2">
-          <RevenuePerNightChart data={data.revenuePerNightData} propertyNames={data.propertyNames} />
+      {/* Graphe contextuel selon KPI sélectionné */}
+      {activeCard === "occupancy" && (
+        <div className="grid gap-6 lg:grid-cols-4">
+          <OccupationDonut rate={data.stats.occupancyRate} />
+          <div className="lg:col-span-3">
+            <OccupancyChart data={data.occupancyData} />
+          </div>
         </div>
-        <OccupancyBarChart data={data.occupancyByProperty} />
-      </div>
+      )}
+      {(activeCard === "revenuePerNight" || activeCard === "adr") && (
+        <RevenuePerNightChart data={data.revenuePerNightData} propertyNames={data.propertyNames} />
+      )}
+      {(activeCard === "margin" || activeCard === "totalRevenue") && (
+        <RevenueChart data={data.chartData} />
+      )}
+      {activeCard === "revpar" && (
+        <div className="grid gap-6 lg:grid-cols-3">
+          <div className="lg:col-span-2">
+            <OccupancyChart data={data.occupancyData} />
+          </div>
+          <OccupancyBarChart data={data.occupancyByProperty} />
+        </div>
+      )}
 
-      {/* Graphe 4 — Revenus vs Dépenses (pleine largeur) */}
-      <RevenueChart data={data.chartData} />
+      {/* Graphes par défaut si aucun KPI sélectionné */}
+      {!activeCard && (
+        <>
+          <div className="grid gap-6 lg:grid-cols-4">
+            <OccupationDonut rate={data.stats.occupancyRate} />
+            <div className="lg:col-span-3">
+              <OccupancyChart data={data.occupancyData} />
+            </div>
+          </div>
+
+          <div className="grid gap-6 lg:grid-cols-3">
+            <div className="lg:col-span-2">
+              <RevenuePerNightChart data={data.revenuePerNightData} propertyNames={data.propertyNames} />
+            </div>
+            <OccupancyBarChart data={data.occupancyByProperty} />
+          </div>
+
+          <RevenueChart data={data.chartData} />
+        </>
+      )}
 
       {/* Table rentabilité */}
       <ProfitabilityTable data={data.profitability} />

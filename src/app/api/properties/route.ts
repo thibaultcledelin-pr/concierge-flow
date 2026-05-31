@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { createClient } from "@/lib/supabase/server"
 import { propertySchema } from "@/lib/validators"
+import { safePropertyForList } from "@/lib/data-filter"
 
 export async function GET() {
   const supabase = await createClient()
@@ -16,7 +17,7 @@ export async function GET() {
     orderBy: { createdAt: "desc" },
   })
 
-  return NextResponse.json(properties)
+  return NextResponse.json(properties.map(safePropertyForList))
 }
 
 export async function POST(request: Request) {
@@ -48,6 +49,8 @@ export async function POST(request: Request) {
       ...result.data,
       icalUrl: result.data.icalUrl || null,
       icalUrlBooking: result.data.icalUrlBooking || null,
+      ownerName: result.data.ownerName || null,
+      ownerEmail: result.data.ownerEmail || null,
       userId: user.id,
     },
   })

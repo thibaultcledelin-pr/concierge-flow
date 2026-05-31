@@ -32,7 +32,7 @@ export function RevenueChart({ data }: RevenueChartProps) {
           <CardTitle className="text-base">Revenus vs Dépenses</CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="py-8 text-center text-sm text-muted-foreground">Pas encore de données</p>
+          <div className="flex flex-col items-center gap-2 py-12"><p className="text-sm font-medium">Pas encore de donnees</p><p className="text-xs text-muted-foreground">Les graphiques apparaitront quand vous aurez des reservations et depenses</p></div>
         </CardContent>
       </Card>
     )
@@ -44,7 +44,8 @@ export function RevenueChart({ data }: RevenueChartProps) {
         <CardTitle className="text-base">Revenus vs Dépenses</CardTitle>
       </CardHeader>
       <CardContent>
-        <ResponsiveContainer width="100%" height={300}>
+        <div style={{ outline: "none" }} tabIndex={-1}>
+          <ResponsiveContainer width="100%" height={300}>
           <AreaChart data={data}>
             <defs>
               <linearGradient id="revGrad" x1="0" y1="0" x2="0" y2="1">
@@ -52,21 +53,21 @@ export function RevenueChart({ data }: RevenueChartProps) {
                 <stop offset="100%" stopColor="#22c55e" stopOpacity={0} />
               </linearGradient>
               <linearGradient id="profitGrad" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#7c3aed" stopOpacity={0.15} />
-                <stop offset="100%" stopColor="#7c3aed" stopOpacity={0} />
+                <stop offset="0%" stopColor="#f59e0b" stopOpacity={0.15} />
+                <stop offset="100%" stopColor="#f59e0b" stopOpacity={0} />
               </linearGradient>
             </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" strokeOpacity={0.15} />
+            <CartesianGrid strokeDasharray="4 4" stroke="rgba(255,255,255,0.04)" />
             <XAxis
               dataKey="month"
               tickFormatter={formatMonth}
-              stroke="rgba(255,255,255,0.7)"
+              stroke="rgba(255,255,255,0.3)"
               fontSize={12}
               tickLine={false}
               axisLine={false}
             />
             <YAxis
-              stroke="rgba(255,255,255,0.7)"
+              stroke="rgba(255,255,255,0.3)"
               fontSize={12}
               tickLine={false}
               axisLine={false}
@@ -115,16 +116,17 @@ export function RevenueChart({ data }: RevenueChartProps) {
             <Area
               type="monotone"
               dataKey="profit"
-              stroke="#7c3aed"
+              stroke="#f59e0b"
               fill="url(#profitGrad)"
               strokeWidth={2.5}
               dot={false}
-              activeDot={{ r: 5, fill: "#7c3aed", strokeWidth: 2, stroke: "hsl(var(--card))" }}
+              activeDot={{ r: 5, fill: "#f59e0b", strokeWidth: 2, stroke: "hsl(var(--card))" }}
               animationDuration={1400}
               animationEasing="ease-out"
             />
           </AreaChart>
         </ResponsiveContainer>
+        </div>
       </CardContent>
     </Card>
   )

@@ -24,3 +24,7 @@ export function calculateNights(checkIn: Date, checkOut: Date): number {
   const diff = new Date(checkOut).getTime() - new Date(checkIn).getTime()
   return Math.ceil(diff / (1000 * 60 * 60 * 24))
 }
+
+export function round1(value: number): number {
+  return Math.round(value * 10) / 10
+}

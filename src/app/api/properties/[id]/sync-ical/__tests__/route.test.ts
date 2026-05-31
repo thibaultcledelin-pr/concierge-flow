@@ -2,8 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest"
 import { POST } from "../route"
 
 const mockFindFirst = vi.fn()
-const mockFindUnique = vi.fn()
-const mockCreate = vi.fn()
+const mockUpsert = vi.fn()
 
 vi.mock("@/lib/prisma", () => ({
   prisma: {
@@ -11,8 +10,7 @@ vi.mock("@/lib/prisma", () => ({
       findFirst: (...args: unknown[]) => mockFindFirst(...args),
     },
     booking: {
-      findUnique: (...args: unknown[]) => mockFindUnique(...args),
-      create: (...args: unknown[]) => mockCreate(...args),
+      upsert: (...args: unknown[]) => mockUpsert(...args),
     },
   },
 }))
@@ -74,7 +72,7 @@ describe("POST /api/properties/[id]/sync-ical", () => {
     expect(res.status).toBe(400)
   })
 
-  it("creates new bookings from iCal", async () => {
+  it("creates new bookings from iCal via upsert", async () => {
     mockGetUser.mockResolvedValue({ data: { user: { id: "user-1" } } })
     mockFindFirst.mockResolvedValue({
       id: "prop-1",
@@ -86,19 +84,18 @@ describe("POST /api/properties/[id]/sync-ical", () => {
       ok: true,
       text: async () => "BEGIN:VCALENDAR\nEND:VCALENDAR",
     })
-    mockFindUnique.mockResolvedValue(null)
-    mockCreate.mockResolvedValue({})
+    mockUpsert.mockResolvedValue({ createdAt: new Date() })
 
     const req = new Request("http://localhost/api/properties/prop-1/sync-ical", { method: "POST" })
     const res = await POST(req, { params: Promise.resolve({ id: "prop-1" }) })
     const data = await res.json()
 
     expect(res.status).toBe(200)
+    expect(mockUpsert).toHaveBeenCalled()
     expect(data.created).toBe(1)
-    expect(data.skipped).toBe(0)
   })
 
-  it("skips existing bookings (deduplication)", async () => {
+  it("skips existing bookings (deduplication via upsert)", async () => {
     mockGetUser.mockResolvedValue({ data: { user: { id: "user-1" } } })
     mockFindFirst.mockResolvedValue({
       id: "prop-1",
@@ -110,7 +107,8 @@ describe("POST /api/properties/[id]/sync-ical", () => {
       ok: true,
       text: async () => "BEGIN:VCALENDAR\nEND:VCALENDAR",
     })
-    mockFindUnique.mockResolvedValue({ id: "existing-booking" })
+    // Upsert returns old createdAt = existing booking
+    mockUpsert.mockResolvedValue({ createdAt: new Date("2020-01-01") })
 
     const req = new Request("http://localhost/api/properties/prop-1/sync-ical", { method: "POST" })
     const res = await POST(req, { params: Promise.resolve({ id: "prop-1" }) })
@@ -118,5 +116,41 @@ describe("POST /api/properties/[id]/sync-ical", () => {
 
     expect(data.created).toBe(0)
     expect(data.skipped).toBe(1)
+  })
+
+  it("logs error to console.error and returns generic message", async () => {
+    mockGetUser.mockResolvedValue({ data: { user: { id: "user-1" } } })
+    mockFindFirst.mockResolvedValue({
+      id: "p1", userId: "user-1",
+      icalUrl: "https://airbnb.com/cal.ics", icalUrlBooking: null,
+    })
+    mockFetch.mockRejectedValue(new Error("Network failure"))
+    const spy = vi.spyOn(console, "error").mockImplementation(() => {})
+
+    const req = new Request("http://localhost/api/properties/p1/sync-ical", { method: "POST" })
+    const res = await POST(req, { params: Promise.resolve({ id: "p1" }) })
+    const data = await res.json()
+
+    expect(spy).toHaveBeenCalled()
+    expect(data.errors[0]).toBe("Error processing AIRBNB iCal")
+    spy.mockRestore()
+  })
+
+  it("handles fetch timeout gracefully", async () => {
+    mockGetUser.mockResolvedValue({ data: { user: { id: "user-1" } } })
+    mockFindFirst.mockResolvedValue({
+      id: "p1", userId: "user-1",
+      icalUrl: "https://airbnb.com/cal.ics", icalUrlBooking: null,
+    })
+    mockFetch.mockRejectedValue(new DOMException("The operation was aborted", "AbortError"))
+    vi.spyOn(console, "error").mockImplementation(() => {})
+
+    const req = new Request("http://localhost/api/properties/p1/sync-ical", { method: "POST" })
+    const res = await POST(req, { params: Promise.resolve({ id: "p1" }) })
+    const data = await res.json()
+
+    expect(res.status).toBe(200)
+    expect(data.errors).toHaveLength(1)
+    expect(data.created).toBe(0)
   })
 })

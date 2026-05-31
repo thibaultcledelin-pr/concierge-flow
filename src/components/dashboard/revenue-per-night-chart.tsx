@@ -53,7 +53,12 @@ export function RevenuePerNightChart({ data, propertyNames }: RevenuePerNightCha
           <CardTitle className="text-base">Revenu net / nuitée</CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="py-8 text-center text-sm text-muted-foreground">Pas encore de données</p>
+          <div className="flex flex-col items-center gap-2 py-12">
+            <p className="text-sm font-medium">Pas encore de donnees</p>
+            <p className="text-xs text-muted-foreground">
+              Les graphiques apparaitront quand vous aurez des reservations et depenses
+            </p>
+          </div>
         </CardContent>
       </Card>
     )
@@ -65,46 +70,48 @@ export function RevenuePerNightChart({ data, propertyNames }: RevenuePerNightCha
         <CardTitle className="text-base">Revenu net / nuitée</CardTitle>
       </CardHeader>
       <CardContent>
-        <ResponsiveContainer width="100%" height={280}>
-          <LineChart data={data}>
-            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" strokeOpacity={0.15} />
-            <XAxis
-              dataKey="month"
-              tickFormatter={formatMonth}
-              stroke="rgba(255,255,255,0.7)"
-              fontSize={12}
-              tickLine={false}
-              axisLine={false}
-            />
-            <YAxis
-              stroke="rgba(255,255,255,0.7)"
-              fontSize={12}
-              tickLine={false}
-              axisLine={false}
-              domain={[0, "auto"]}
-              tickFormatter={(v: number) => `${v}€`}
-            />
-            <Tooltip
-              cursor={{ stroke: "rgba(255,255,255,0.1)", strokeWidth: 1 }}
-              content={<PerPropertyTooltip />}
-            />
-            <Legend iconType="circle" iconSize={8} />
-            {propertyNames.map((name, i) => (
-              <Line
-                key={name}
-                type="monotone"
-                dataKey={name}
-                stroke={COLORS[i % COLORS.length]}
-                strokeWidth={2}
-                connectNulls={false}
-                dot={false}
-                activeDot={{ r: 5, fill: COLORS[i % COLORS.length], strokeWidth: 2, stroke: "hsl(var(--card))" }}
-                animationDuration={1000}
-                animationEasing="ease-out"
+        <div style={{ outline: "none" }} tabIndex={-1}>
+          <ResponsiveContainer width="100%" height={280}>
+            <LineChart data={data}>
+              <CartesianGrid strokeDasharray="4 4" stroke="rgba(255,255,255,0.04)" />
+              <XAxis
+                dataKey="month"
+                tickFormatter={formatMonth}
+                stroke="rgba(255,255,255,0.3)"
+                fontSize={12}
+                tickLine={false}
+                axisLine={false}
               />
-            ))}
-          </LineChart>
-        </ResponsiveContainer>
+              <YAxis
+                stroke="rgba(255,255,255,0.3)"
+                fontSize={12}
+                tickLine={false}
+                axisLine={false}
+                domain={[0, "auto"]}
+                tickFormatter={(v: number) => `${v}€`}
+              />
+              <Tooltip
+                cursor={{ stroke: "rgba(255,255,255,0.1)", strokeWidth: 1 }}
+                content={<PerPropertyTooltip />}
+              />
+              <Legend iconType="circle" iconSize={8} />
+              {propertyNames.map((name, i) => (
+                <Line
+                  key={name}
+                  type="monotone"
+                  dataKey={name}
+                  stroke={COLORS[i % COLORS.length]}
+                  strokeWidth={2}
+                  connectNulls={false}
+                  dot={false}
+                  activeDot={{ r: 5, fill: COLORS[i % COLORS.length], strokeWidth: 2, stroke: "hsl(var(--card))" }}
+                  animationDuration={1000}
+                  animationEasing="ease-out"
+                />
+              ))}
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
       </CardContent>
     </Card>
   )
