@@ -15,7 +15,7 @@ describe("RevenuePerNightChart", () => {
 
   it("affiche le graphique quand il y a des données", () => {
     render(<RevenuePerNightChart data={sampleData} propertyNames={["Studio", "Villa"]} />)
-    expect(screen.getByText("Revenu net / nuitée")).toBeInTheDocument()
+    expect(screen.getByText("Revenu / nuitée")).toBeInTheDocument()
     // Pas l'état vide
     expect(screen.queryByText("Pas encore de donnees")).not.toBeInTheDocument()
   })

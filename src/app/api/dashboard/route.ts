@@ -237,7 +237,7 @@ function buildChartData(agg: MonthlyAggregation, properties: PropertyWithRelatio
     }
   })
 
-  // Revenu net par nuitée (6 derniers mois)
+  // Revenu brut par nuitée (6 derniers mois)
   const recentMonths = allMonths.filter((m) => monthRegex.test(m)).slice(-6)
 
   // On n'affiche que les logements ayant eu au moins une nuit sur la période
@@ -252,8 +252,9 @@ function buildChartData(agg: MonthlyAggregation, properties: PropertyWithRelatio
       const nights = agg.propertyNights[month]?.[name] || 0
       if (nights > 0) {
         const rev = agg.propertyRevenue[month]?.[name] || 0
-        const exp = agg.propertyExpenses[month]?.[name] || 0
-        point[name] = round1((rev - exp) / nights)
+        // Revenu brut / nuitée (ADR) : stable et toujours positif, contrairement au
+        // net qui explose quand une grosse dépense ponctuelle tombe sur un mois creux.
+        point[name] = round1(rev / nights)
       } else {
         // null = pas de données ce mois-là (courbe coupée, pas de faux zéro)
         point[name] = null
@@ -376,6 +377,8 @@ export async function GET(request: Request) {
     : 0
 
   const occupancyByProperty = properties
+    // On exclut les logements sans aucune réservation (ex. "test"/"demo")
+    .filter((p) => p.bookings.length > 0)
     .map((p) => ({
       name: p.name,
       occupancy: rangeDays > 0
