@@ -206,15 +206,27 @@ function buildChartData(agg: MonthlyAggregation, properties: PropertyWithRelatio
     }
   })
 
-  // Revenu net par nuitée par logement (6 derniers mois)
-  const propertyNames = properties.map((property) => property.name)
-  const revenuePerNight = allMonths.slice(-6).map((month) => {
-    const point: Record<string, string | number> = { month }
+  // Revenu net par nuitée (6 derniers mois)
+  const recentMonths = allMonths.filter((m) => monthRegex.test(m)).slice(-6)
+
+  // On n'affiche que les logements ayant eu au moins une nuit sur la période
+  // (évite les courbes plates à 0 des logements vides type "demo"/"test")
+  const propertyNames = properties
+    .map((property) => property.name)
+    .filter((name) => recentMonths.some((month) => (agg.propertyNights[month]?.[name] || 0) > 0))
+
+  const revenuePerNight = recentMonths.map((month) => {
+    const point: Record<string, string | number | null> = { month }
     for (const name of propertyNames) {
-      const rev = agg.propertyRevenue[month]?.[name] || 0
-      const exp = agg.propertyExpenses[month]?.[name] || 0
       const nights = agg.propertyNights[month]?.[name] || 0
-      point[name] = nights > 0 ? round1((rev - exp) / nights) : 0
+      if (nights > 0) {
+        const rev = agg.propertyRevenue[month]?.[name] || 0
+        const exp = agg.propertyExpenses[month]?.[name] || 0
+        point[name] = round1((rev - exp) / nights)
+      } else {
+        // null = pas de données ce mois-là (courbe coupée, pas de faux zéro)
+        point[name] = null
+      }
     }
     return point
   })
