@@ -130,8 +130,8 @@ describe("Dashboard API", () => {
     expect(data.chartData).toHaveLength(0)
   })
 
-  describe("revenu net par nuitée (vue Moyenne)", () => {
-    it("calcule la moyenne pondérée et la bande min/max par mois", async () => {
+  describe("revenu net par nuitée (par logement)", () => {
+    it("calcule le revenu net par nuitée de chaque logement", async () => {
       mockGetUser.mockResolvedValue({ data: { user: { id: "user-1" } } })
       mockPropertyFindMany.mockResolvedValue([
         {
@@ -154,10 +154,6 @@ describe("Dashboard API", () => {
       // Studio = 1000/10 = 100€, Villa = (2000-500)/10 = 150€
       expect(may.Studio).toBe(100)
       expect(may.Villa).toBe(150)
-      // Moyenne pondérée = (1000 + 1500) / 20 = 125€
-      expect(may.__avg).toBe(125)
-      // Bande = [moins rentable, plus rentable]
-      expect(may.__band).toEqual([100, 150])
     })
 
     it("exclut les logements sans aucune nuit et met null pour les mois sans données", async () => {
