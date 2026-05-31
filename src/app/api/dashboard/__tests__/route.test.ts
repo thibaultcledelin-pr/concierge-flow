@@ -194,6 +194,64 @@ describe("Dashboard API", () => {
     })
   })
 
+  describe("occupation sur intervalle de dates", () => {
+    it("calcule l'occupation sur l'intervalle from/to fourni", async () => {
+      mockGetUser.mockResolvedValue({ data: { user: { id: "user-1" } } })
+      mockPropertyFindMany.mockResolvedValue([
+        {
+          id: "p1", name: "Studio", city: "Paris",
+          bookings: [{ totalAmount: 1400, nights: 14, platform: "AIRBNB", checkIn: new Date("2026-02-10") }],
+          expenses: [],
+        },
+      ])
+      mockExpenseFindMany.mockResolvedValue([])
+
+      // Février : 28 jours dispo, 14 nuits → 50%
+      const res = await GET(mockRequest({ from: "2026-02-01", to: "2026-02-28" }))
+      const data = await res.json()
+
+      expect(data.occupancyRange).toBe(50)
+      expect(data.occupancyByProperty[0].name).toBe("Studio")
+      expect(data.occupancyByProperty[0].occupancy).toBe(50)
+    })
+
+    it("exclut les réservations hors de l'intervalle", async () => {
+      mockGetUser.mockResolvedValue({ data: { user: { id: "user-1" } } })
+      mockPropertyFindMany.mockResolvedValue([
+        {
+          id: "p1", name: "Studio", city: "Paris",
+          bookings: [{ totalAmount: 1400, nights: 14, platform: "AIRBNB", checkIn: new Date("2026-02-10") }],
+          expenses: [],
+        },
+      ])
+      mockExpenseFindMany.mockResolvedValue([])
+
+      // Mars ne contient pas la réservation de février → 0%
+      const res = await GET(mockRequest({ from: "2026-03-01", to: "2026-03-31" }))
+      const data = await res.json()
+
+      expect(data.occupancyRange).toBe(0)
+      expect(data.occupancyByProperty[0].occupancy).toBe(0)
+    })
+
+    it("plafonne l'occupation à 100%", async () => {
+      mockGetUser.mockResolvedValue({ data: { user: { id: "user-1" } } })
+      mockPropertyFindMany.mockResolvedValue([
+        {
+          id: "p1", name: "Studio", city: "Paris",
+          bookings: [{ totalAmount: 5000, nights: 60, platform: "AIRBNB", checkIn: new Date("2026-02-10") }],
+          expenses: [],
+        },
+      ])
+      mockExpenseFindMany.mockResolvedValue([])
+
+      const res = await GET(mockRequest({ from: "2026-02-01", to: "2026-02-28" }))
+      const data = await res.json()
+
+      expect(data.occupancyRange).toBe(100)
+    })
+  })
+
   it("returns 0% occupancy for properties with no bookings", async () => {
     mockGetUser.mockResolvedValue({ data: { user: { id: "user-1" } } })
     mockPropertyFindMany.mockResolvedValue([

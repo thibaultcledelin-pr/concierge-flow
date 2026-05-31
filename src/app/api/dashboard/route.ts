@@ -44,6 +44,37 @@ function toMonthKey(date: Date): string {
   return new Date(date).toISOString().slice(0, 7)
 }
 
+// Intervalle de dates pour l'occupation (défaut : 30 derniers jours)
+function parseDateRange(fromParam: string | null, toParam: string | null) {
+  const to = toParam ? new Date(`${toParam}T23:59:59`) : new Date()
+  let from: Date
+  if (fromParam) {
+    from = new Date(`${fromParam}T00:00:00`)
+  } else {
+    from = new Date(to)
+    from.setHours(0, 0, 0, 0)
+    from.setDate(from.getDate() - 29)
+  }
+  return { from, to }
+}
+
+// Nombre de jours calendaires couverts par l'intervalle (inclusif)
+function daysInRange(from: Date, to: Date): number {
+  const a = new Date(from); a.setHours(0, 0, 0, 0)
+  const b = new Date(to); b.setHours(0, 0, 0, 0)
+  return Math.max(1, Math.round((b.getTime() - a.getTime()) / 86400000) + 1)
+}
+
+// Nuits réservées dans l'intervalle (filtre sur la date d'arrivée)
+function nightsInRange(bookings: BookingRecord[], from: Date, to: Date): number {
+  return bookings
+    .filter((b) => {
+      const d = new Date(b.checkIn)
+      return d >= from && d <= to
+    })
+    .reduce((sum, b) => sum + b.nights, 0)
+}
+
 // Mois courant au format "2026-04"
 // Mois courant et précédent
 function currentMonthKey(): string {
@@ -246,6 +277,8 @@ export async function GET(request: Request) {
 
   const { searchParams } = new URL(request.url)
   const propertyId = searchParams.get("propertyId")
+  // Intervalle d'occupation (défaut : 30 derniers jours)
+  const { from, to } = parseDateRange(searchParams.get("from"), searchParams.get("to"))
 
   // Liste complète des logements (pour le sélecteur)
   const allProperties = await prisma.property.findMany({
@@ -334,9 +367,21 @@ export async function GET(request: Request) {
   const monthly = aggregateMonthlyData(properties, globalExpenses)
   const charts = buildChartData(monthly, properties)
 
-  // Occupation par logement (triée par taux décroissant)
-  const occupancyByProperty = profitability
-    .map((p) => ({ name: p.propertyName, occupancy: p.occupancy }))
+  // Occupation sur l'intervalle choisi (global + par logement)
+  const rangeDays = daysInRange(from, to)
+  const totalNightsRange = properties.reduce((sum, p) => sum + nightsInRange(p.bookings, from, to), 0)
+  const availableRange = rangeDays * properties.length
+  const occupancyRange = availableRange > 0
+    ? round1(Math.min(100, (totalNightsRange / availableRange) * 100))
+    : 0
+
+  const occupancyByProperty = properties
+    .map((p) => ({
+      name: p.name,
+      occupancy: rangeDays > 0
+        ? round1(Math.min(100, (nightsInRange(p.bookings, from, to) / rangeDays) * 100))
+        : 0,
+    }))
     .sort((a, b) => b.occupancy - a.occupancy)
 
   return NextResponse.json({
@@ -347,6 +392,7 @@ export async function GET(request: Request) {
     revenuePerNightData: charts.revenuePerNight,
     propertyNames: charts.propertyNames,
     occupancyByProperty,
+    occupancyRange,
     platformData,
     allProperties,
     comparison,
