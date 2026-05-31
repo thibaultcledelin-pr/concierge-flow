@@ -6,9 +6,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 interface OccupationDonutProps {
   rate: number
   label?: string
+  periodLabel?: string
 }
 
-export function OccupationDonut({ rate, label = "Occupation" }: OccupationDonutProps) {
+export function OccupationDonut({ rate, label = "Occupation", periodLabel = "ce mois" }: OccupationDonutProps) {
   const capped = Math.min(100, Math.max(0, rate))
   const data = [
     { name: "occupied", value: capped },
@@ -46,7 +47,7 @@ export function OccupationDonut({ rate, label = "Occupation" }: OccupationDonutP
           </ResponsiveContainer>
           <div className="absolute inset-0 flex flex-col items-center justify-center">
             <span className="text-3xl font-bold">{rate}%</span>
-            <span className="text-xs text-muted-foreground">ce mois</span>
+            <span className="text-xs text-muted-foreground">{periodLabel}</span>
           </div>
         </div>
       </CardContent>
