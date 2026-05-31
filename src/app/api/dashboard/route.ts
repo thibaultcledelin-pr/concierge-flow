@@ -161,32 +161,18 @@ function buildChartData(agg: MonthlyAggregation, properties: PropertyWithRelatio
     .filter((name) => recentMonths.some((month) => (agg.propertyNights[month]?.[name] || 0) > 0))
 
   const revenuePerNight = recentMonths.map((month) => {
-    const point: Record<string, string | number | null | [number, number]> = { month }
-    const values: number[] = []
-    let monthProfit = 0
-    let monthNights = 0
-
+    const point: Record<string, string | number | null> = { month }
     for (const name of propertyNames) {
       const nights = agg.propertyNights[month]?.[name] || 0
       if (nights > 0) {
         const rev = agg.propertyRevenue[month]?.[name] || 0
         const exp = agg.propertyExpenses[month]?.[name] || 0
-        const perNight = round1((rev - exp) / nights)
-        point[name] = perNight
-        values.push(perNight)
-        monthProfit += rev - exp
-        monthNights += nights
+        point[name] = round1((rev - exp) / nights)
       } else {
         // null = pas de données ce mois-là (courbe coupée, pas de faux zéro)
         point[name] = null
       }
     }
-
-    // Moyenne pondérée (profit total / nuits totales) = vue par défaut "Moyenne"
-    point.__avg = monthNights > 0 ? round1(monthProfit / monthNights) : null
-    // Bande min/max entre le logement le moins et le plus rentable du mois
-    point.__band = values.length > 0 ? [Math.min(...values), Math.max(...values)] : null
-
     return point
   })
 

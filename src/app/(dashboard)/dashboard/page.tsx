@@ -42,7 +42,7 @@ interface DashboardData {
   }[]
   chartData: { month: string; revenue: number; expenses: number; profit: number }[]
   occupancyData: { month: string; occupancy: number }[]
-  revenuePerNightData: Record<string, string | number | null | [number, number]>[]
+  revenuePerNightData: Record<string, string | number | null>[]
   propertyNames: string[]
   occupancyByProperty: { name: string; occupancy: number }[]
   platformData: { name: string; value: number }[]
