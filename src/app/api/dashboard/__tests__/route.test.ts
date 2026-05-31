@@ -129,4 +129,69 @@ describe("Dashboard API", () => {
     expect(data.profitability).toHaveLength(0)
     expect(data.chartData).toHaveLength(0)
   })
+
+  describe("revenu net par nuitée (vue Moyenne)", () => {
+    it("calcule la moyenne pondérée et la bande min/max par mois", async () => {
+      mockGetUser.mockResolvedValue({ data: { user: { id: "user-1" } } })
+      mockPropertyFindMany.mockResolvedValue([
+        {
+          id: "p1", name: "Studio", city: "Paris",
+          bookings: [{ totalAmount: 1000, nights: 10, platform: "AIRBNB", checkIn: new Date("2026-05-10") }],
+          expenses: [],
+        },
+        {
+          id: "p2", name: "Villa", city: "Cannes",
+          bookings: [{ totalAmount: 2000, nights: 10, platform: "AIRBNB", checkIn: new Date("2026-05-10") }],
+          expenses: [{ amount: 500, date: new Date("2026-05-15") }],
+        },
+      ])
+      mockExpenseFindMany.mockResolvedValue([])
+
+      const res = await GET(mockRequest())
+      const data = await res.json()
+
+      const may = data.revenuePerNightData.find((p: { month: string }) => p.month === "2026-05")
+      // Studio = 1000/10 = 100€, Villa = (2000-500)/10 = 150€
+      expect(may.Studio).toBe(100)
+      expect(may.Villa).toBe(150)
+      // Moyenne pondérée = (1000 + 1500) / 20 = 125€
+      expect(may.__avg).toBe(125)
+      // Bande = [moins rentable, plus rentable]
+      expect(may.__band).toEqual([100, 150])
+    })
+
+    it("exclut les logements sans aucune nuit et met null pour les mois sans données", async () => {
+      mockGetUser.mockResolvedValue({ data: { user: { id: "user-1" } } })
+      mockPropertyFindMany.mockResolvedValue([
+        {
+          id: "p1", name: "Actif", city: "Paris",
+          bookings: [
+            { totalAmount: 900, nights: 9, platform: "AIRBNB", checkIn: new Date("2026-04-10") },
+            { totalAmount: 1000, nights: 10, platform: "AIRBNB", checkIn: new Date("2026-05-10") },
+          ],
+          expenses: [],
+        },
+        {
+          id: "p2", name: "Recent", city: "Lyon",
+          bookings: [{ totalAmount: 800, nights: 8, platform: "AIRBNB", checkIn: new Date("2026-05-10") }],
+          expenses: [],
+        },
+        { id: "p3", name: "Vide", city: "Nice", bookings: [], expenses: [] },
+      ])
+      mockExpenseFindMany.mockResolvedValue([])
+
+      const res = await GET(mockRequest())
+      const data = await res.json()
+
+      // "Vide" (aucune nuit) ne doit pas apparaître dans les courbes
+      expect(data.propertyNames).toContain("Actif")
+      expect(data.propertyNames).toContain("Recent")
+      expect(data.propertyNames).not.toContain("Vide")
+
+      // En avril, "Recent" n'a pas de données → null (pas un faux zéro)
+      const april = data.revenuePerNightData.find((p: { month: string }) => p.month === "2026-04")
+      expect(april.Recent).toBeNull()
+      expect(april.Actif).toBe(100)
+    })
+  })
 })
