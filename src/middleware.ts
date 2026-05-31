@@ -33,6 +33,7 @@ export async function middleware(request: NextRequest) {
     !request.nextUrl.pathname.startsWith('/register') &&
     !request.nextUrl.pathname.startsWith('/callback') &&
     !request.nextUrl.pathname.startsWith('/preview') &&
+    !request.nextUrl.pathname.startsWith('/pricing') &&
     request.nextUrl.pathname !== '/'
   ) {
     const url = request.nextUrl.clone()
