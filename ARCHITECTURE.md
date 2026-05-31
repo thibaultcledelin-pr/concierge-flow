@@ -1,217 +1,173 @@
-# ARCHITECTURE.md — Documentation technique ConciergeFlow
+# Architecture — ConciergeFlow
 
-> Derniere mise a jour : 2026-04-20 — 189 tests, 97 fichiers source, ~21k lignes
+> Documentation technique. ~12 500 lignes TypeScript · 18 routes API · 11 pages · 217 tests.
 
 ## Vue d'ensemble
 
-ConciergeFlow est un SaaS de suivi de rentabilite pour conciergeries Airbnb/Booking.
+ConciergeFlow est une application Next.js 16 full-stack : le même projet sert le front (React) et le back (routes API). L'authentification et la base de données sont gérées par Supabase, l'accès aux données par Prisma.
 
 ```
-Utilisateur
-  |
-  +-- /login, /register     → Authentification Supabase
-  |
-  +-- /dashboard             → KPIs interactifs + graphiques + onboarding wizard
-  |     +-- Donut occupation
-  |     +-- Comparaison mois vs mois
-  |     +-- Selecteur de logement
-  |     +-- Sync iCal en un clic
-  |
-  +-- /properties            → CRUD logements
-  |     +-- /[id]            → Mini-dashboard dedie (KPIs, graphique, reservations, depenses)
-  |     +-- /[id]/edit       → Formulaire edition
-  |     +-- /new             → Creation
-  |
-  +-- /revenue               → Import CSV + tableau reservations
-  +-- /expenses              → Saisie depenses + filtres + recurrence auto
-  +-- /reports               → Rapports PDF proprietaire + envoi email
-  +-- /alerts                → Alertes intelligentes (marge negative, occupation basse)
+Visiteur
+  │
+  ├─ /                       Landing page publique
+  ├─ /login, /register       Authentification Supabase
+  │
+  └─ /dashboard (protégé)    Layout avec sidebar + topbar
+      ├─ /dashboard          KPIs, graphiques, comparaison mois/mois
+      ├─ /properties         Liste des logements
+      │   ├─ /new            Création
+      │   └─ /[id]           Détail (mini-dashboard) + /edit
+      ├─ /calendar           Vue calendrier des réservations
+      ├─ /revenue            Import CSV + tableau des réservations
+      ├─ /expenses           Dépenses + filtres + récurrence
+      ├─ /reports            Rapports PDF + envoi email
+      ├─ /alerts             Alertes de rentabilité
+      └─ /settings           Profil, conciergerie, sécurité
 ```
 
 ---
 
-## Stack technique
+## Arborescence
 
-| Outil | Version | Role |
-|-------|---------|------|
-| **Next.js** | 16 | Framework React (App Router, Turbopack) |
-| **Supabase** | — | Auth (email/password) + PostgreSQL |
-| **Prisma** | 7 | ORM avec PrismaPg adapter |
-| **Tailwind CSS** | 4 | Styles (oklch dark mode) |
-| **shadcn/ui** | — | 17 composants UI (Radix primitives) |
-| **Recharts** | 3 | AreaChart, BarChart, PieChart |
-| **ical.js** | — | Parsing calendriers iCal |
-| **Papaparse** | — | Parsing fichiers CSV |
-| **jsPDF** | — | Generation rapports PDF |
-| **Resend** | — | Envoi emails transactionnels |
-| **Vitest** | 4 | Tests unitaires + composants (jsdom) |
-
----
-
-## Routes API (13 endpoints)
-
-### Dashboard
-| Route | Methode | Description |
-|-------|---------|-------------|
-| `/api/dashboard` | GET | KPIs globaux, graphiques, comparaison mois vs mois. Supporte `?propertyId=` |
-
-### Properties
-| Route | Methode | Description |
-|-------|---------|-------------|
-| `/api/properties` | GET/POST | Liste / creation de logements |
-| `/api/properties/[id]` | GET/PUT/DELETE | Detail / modification / suppression |
-| `/api/properties/[id]/bookings` | GET | Reservations paginées d'un logement |
-| `/api/properties/[id]/sync-ical` | POST | Sync calendrier iCal (Airbnb + Booking) |
-| `/api/properties/[id]/stats` | GET | Stats detaillees d'un logement (KPIs + graphique + dernieres reservations/depenses) |
-| `/api/properties/[id]/report` | GET | Donnees pour rapport proprietaire (supporte `?month=2026-04`) |
-| `/api/properties/[id]/send-report` | POST | Envoie le rapport par email au proprietaire via Resend |
-
-### Expenses
-| Route | Methode | Description |
-|-------|---------|-------------|
-| `/api/expenses` | GET/POST | Liste (filtres + pagination) / creation |
-| `/api/expenses/[id]` | PUT/DELETE | Modification / suppression |
-| `/api/expenses/run-recurring` | POST | Genere les depenses recurrentes manquantes pour l'utilisateur |
-
-### Revenue
-| Route | Methode | Description |
-|-------|---------|-------------|
-| `/api/revenue/import-csv` | POST | Upload CSV (FormData), parse Airbnb/Booking, cree/enrichit les bookings |
-
-### Autres
-| Route | Methode | Description |
-|-------|---------|-------------|
-| `/api/sync-all` | POST | Sync iCal de tous les logements en un clic |
-| `/api/alerts` | GET | Alertes intelligentes calculees en temps reel |
-| `/api/auth/signout` | POST | Deconnexion server-side |
-| `/api/cron/recurring-expenses` | POST | Endpoint cron pour depenses recurrentes (protege par CRON_SECRET) |
+```
+src/
+├── app/
+│   ├── (auth)/            login, register, callback
+│   ├── (dashboard)/       11 pages applicatives + layout
+│   ├── api/               18 routes API
+│   └── page.tsx           landing page
+├── components/
+│   ├── ui/                composants shadcn (Radix)
+│   ├── layout/            sidebar, topbar, mobile-nav
+│   ├── dashboard/         cartes KPI, graphiques Recharts, donut
+│   ├── properties/        formulaire logement, import iCal
+│   ├── expenses/          formulaire dépense, génération récurrente
+│   ├── revenue/           import CSV
+│   ├── reports/           génération PDF, boutons rapport/email
+│   └── onboarding/        wizard 4 étapes, checklist
+├── hooks/                 use-toast, use-session-timeout, use-form-draft
+├── lib/                   prisma, supabase, validators, parsers, utils
+└── middleware.ts          protection des routes
+```
 
 ---
 
-## Composants principaux
+## Routes API (18)
 
-### Dashboard (`src/components/dashboard/`)
-| Composant | Description |
-|-----------|-------------|
-| `stats-cards.tsx` | 6 KPIs cliquables avec hover, info tooltip, variation mois vs mois |
-| `occupation-donut.tsx` | Donut chart avec % au centre |
-| `occupancy-chart.tsx` | Timeline occupation (AreaChart) |
-| `occupancy-bar-chart.tsx` | Occupation par logement (BarChart horizontal) |
-| `revenue-chart.tsx` | Revenus vs Depenses vs Marge (AreaChart) |
-| `revenue-per-night-chart.tsx` | Revenu net/nuit par logement (AreaChart multi-series) |
-| `platform-chart.tsx` | Repartition par plateforme (PieChart) |
-| `profitability-table.tsx` | Tableau rentabilite trie par marge |
-| `sync-button.tsx` | Bouton sync iCal tous logements |
+Toutes les routes vérifient l'authentification Supabase et la propriété des données (un utilisateur n'accède qu'à ses propres ressources).
 
-### Reports (`src/components/reports/`)
-| Composant | Description |
-|-----------|-------------|
-| `generate-pdf.ts` | Generation PDF avec jsPDF (resume financier, tableaux reservations/depenses) |
-| `report-button.tsx` | Bouton telechargement PDF avec loading state |
-| `send-report-button.tsx` | Bouton envoi email au proprietaire |
+### Logements
+| Route | Méthode | Description |
+|-------|---------|-------------|
+| `/api/properties` | GET / POST | Liste (champs sensibles filtrés) / création |
+| `/api/properties/[id]` | GET / PUT / DELETE | Détail / modification / suppression |
+| `/api/properties/[id]/bookings` | GET | Réservations paginées |
+| `/api/properties/[id]/stats` | GET | KPIs + graphique + activité récente |
+| `/api/properties/[id]/sync-ical` | POST | Synchronise les calendriers iCal |
+| `/api/properties/[id]/report` | GET | Données du rapport (filtre `?month=`) |
+| `/api/properties/[id]/send-report` | POST | Envoie le rapport PDF par email |
 
-### Onboarding (`src/components/onboarding/`)
-| Composant | Description |
-|-----------|-------------|
-| `onboarding-wizard.tsx` | Wizard 3 etapes (bienvenue → premier logement → c'est parti) |
+### Données & analyse
+| Route | Méthode | Description |
+|-------|---------|-------------|
+| `/api/dashboard` | GET | Agrégation KPIs + comparaison mois/mois |
+| `/api/expenses` | GET / POST | Liste filtrée / création |
+| `/api/expenses/[id]` | PUT / DELETE | Modification / suppression |
+| `/api/expenses/run-recurring` | POST | Génère les dépenses récurrentes manquantes |
+| `/api/revenue/import-csv` | POST | Import CSV Airbnb/Booking |
+| `/api/alerts` | GET | Alertes calculées en temps réel |
+| `/api/sync-all` | POST | Sync iCal de tous les logements |
+| `/api/profile` | GET / PUT | Profil utilisateur |
+| `/api/auth/signout` | POST | Déconnexion serveur |
 
-### Layout (`src/components/layout/`)
-| Composant | Description |
-|-----------|-------------|
-| `sidebar.tsx` | Barre laterale (6 liens nav), logo cliquable vers dashboard |
-| `topbar.tsx` | Barre haute, hamburger mobile, avatar + dropdown deconnexion |
-| `mobile-nav.tsx` | Menu mobile (Sheet slide-in) |
+### Tâches planifiées (cron)
+| Route | Fréquence | Description |
+|-------|-----------|-------------|
+| `/api/cron/sync-ical` | chaque heure | Sync iCal de tous les utilisateurs |
+| `/api/cron/recurring-expenses` | chaque jour | Génération des dépenses récurrentes |
+
+Les crons sont protégés par `CRON_SECRET` et déclenchés par Vercel Cron (`vercel.json`).
 
 ---
 
-## Modele de donnees (Prisma)
+## Modèle de données (Prisma)
 
 ```
 User ──< Property ──< Booking
-  |         |
-  |         +──< Expense
-  +────────────< Expense (globales, sans propertyId)
+  │         │
+  │         └──< Expense
+  └────────────< Expense (globales, sans logement)
 ```
 
-| Modele | Champs cles |
+| Modèle | Champs clés |
 |--------|-------------|
 | **User** | email, name, company |
 | **Property** | name, address, city, type, rooms, surface, icalUrl, icalUrlBooking, monthlyRent, ownerName, ownerEmail |
 | **Booking** | checkIn, checkOut, nights, totalAmount, netAmount, platform, source, externalId |
 | **Expense** | category, label, amount, date, isRecurring, frequency, notes |
-| **Alert** | type, message, severity, isRead |
 
-### Flux de donnees
+### Flux des données
 
 ```
-iCal (Airbnb/Booking)              CSV (Airbnb/Booking)
-  |                                   |
-  v                                   v
-parseIcal()                      parseAirbnbCsv() / parseBookingCsv()
-  |                                   |
-  v                                   v
-Booking (totalAmount=0)          Booking (totalAmount=450€)
-  |                                   |
-  +---- matching par dates+platform --+
-              |
-              v
-        Booking enrichi (montant ajoute)
+iCal (Airbnb/Booking)            CSV (Airbnb/Booking)
+  │                                │
+  ▼                                ▼
+parseIcal()                  parseAirbnbCsv() / parseBookingCsv()
+  │                                │
+  ▼                                ▼
+Booking (montant = 0)        Booking (montant = 450 €)
+  │                                │
+  └──── matching dates+plateforme ─┘
+              │
+              ▼
+        Booking enrichi (montant ajouté)
 ```
 
----
-
-## Utilitaires (`src/lib/`)
-
-| Fichier | Description |
-|---------|-------------|
-| `prisma.ts` | Singleton PrismaClient avec PrismaPg adapter |
-| `supabase/client.ts` | Client Supabase navigateur |
-| `supabase/server.ts` | Client Supabase serveur (cookies) |
-| `utils.ts` | cn(), formatCurrency(), formatDate(), calculateNights() |
-| `validators.ts` | Schemas Zod : propertySchema, expenseSchema, bookingSchema |
-| `chart-utils.ts` | MONTHS_FR, formatMonth(), TOOLTIP_STYLE (partage entre graphiques) |
-| `ical-parser.ts` | parseIcal(), detectPlatform() |
-| `csv-parser.ts` | parseAirbnbCsv(), parseBookingCsv(), detectCsvPlatform() |
-| `env.ts` | validateEnv() — verification variables d'environnement |
+Les calendriers iCal fournissent les **dates** mais pas les montants ; les CSV plateformes fournissent les **montants**. ConciergeFlow synchronise d'abord les iCal, puis enrichit avec les CSV.
 
 ---
 
-## Tests — 189 tests, 35 fichiers, ~16s
+## Bibliothèque (`src/lib/`)
 
-| Domaine | Fichiers | Tests |
-|---------|----------|-------|
-| Auth (login, register, callback) | 3 | 14 |
-| Layout (sidebar, topbar, mobile-nav) | 3 | 10 |
-| Dashboard API + composants | 5 | 20 |
-| Properties API + form + detail | 4 | 20 |
-| iCal (parser + API + edge cases) | 3 | 17 |
-| CSV (parser + API + edge cases) | 3 | 21 |
-| Expenses (API + form) | 2 | 15 |
-| Alerts API | 1 | 6 |
-| Reports (button) | 1 | 3 |
-| Property stats + report API | 2 | 9 |
-| Sync-all API | 1 | 4 |
-| Onboarding wizard | 1 | 4 |
-| Occupation donut + sync button | 2 | 7 |
-| Recurring expenses cron | 1 | 9 |
-| Validators + utils + env | 3 | 25 |
-| Pages regression | 1 | 3 |
+| Fichier | Rôle |
+|---------|------|
+| `prisma.ts` | Singleton PrismaClient (adapter PrismaPg) |
+| `supabase/client.ts` / `server.ts` | Clients Supabase navigateur / serveur |
+| `validators.ts` | Schémas Zod partagés client + serveur |
+| `ical-parser.ts` | `parseIcal()`, `detectPlatform()` |
+| `csv-parser.ts` | Parsers CSV Airbnb / Booking |
+| `chart-utils.ts` | Constantes & styles partagés des graphiques |
+| `constants.ts` | Libellés catégories, fréquences, types de logement |
+| `data-filter.ts` | Filtrage des champs sensibles des réponses API |
+| `url-validator.ts` | Validation anti-SSRF des URLs iCal |
+| `sanitize.ts` | Échappement HTML pour les emails |
+| `rate-limit.ts` | Limiteur de requêtes en mémoire |
+| `utils.ts` | `formatCurrency()`, `formatDate()`, `round1()`, `calculateNights()` |
 
 ---
 
-## Comment ajouter une nouvelle feature
+## Tests (217)
 
-1. Creer une branche depuis main : `git checkout -b claude/feat-ma-feature`
-2. Si besoin d'une route API :
-   - Creer `src/app/api/mon-endpoint/route.ts`
-   - Verifier l'auth Supabase + ownership en debut de handler
-   - Ajouter les tests dans `__tests__/route.test.ts` a cote
-3. Si besoin d'un composant UI :
-   - Creer dans `src/components/[feature]/`
-   - Utiliser les composants shadcn existants (`Card`, `Button`, etc.)
-   - Style dark mode avec les variables CSS (oklch)
-4. Si besoin d'une page :
-   - Creer dans `src/app/(dashboard)/[page]/page.tsx`
-   - Ajouter le lien dans `src/components/layout/sidebar.tsx`
-5. Lancer `npm test && npm run lint` avant de push
-6. Creer la PR avec description detaillee
+Chaque feature a ses tests colocalisés dans un dossier `__tests__/`.
+
+- **Routes API** : auth, validation, propriété des données, cas limites (division par zéro, mois sans données…)
+- **Composants** : rendu, interactions, formulaires
+- **Parsers** : iCal, CSV (cas normaux + cas dégradés)
+- **Sécurité** : SSRF, open redirect, sanitization
+
+```bash
+npm test        # 217 tests, ~25s
+```
+
+CI GitHub Actions : `npm ci` → `npm test` → `npm run lint` à chaque pull request.
+
+---
+
+## Ajouter une fonctionnalité
+
+1. Créer une branche : `git checkout -b feat/ma-feature`
+2. **Route API** : créer `src/app/api/.../route.ts`, vérifier l'auth + la propriété en début de handler, ajouter les tests dans `__tests__/`
+3. **Composant** : créer dans `src/components/[feature]/`, réutiliser les composants shadcn
+4. **Page** : créer dans `src/app/(dashboard)/`, ajouter le lien dans `sidebar.tsx`
+5. Lancer `npm test && npm run lint` avant de pousser
+6. Ouvrir une PR — la CI valide automatiquement
