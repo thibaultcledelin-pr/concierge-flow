@@ -148,6 +148,13 @@ export default function DashboardPage() {
     ? data.allProperties.find((p) => p.id === selectedProperty)?.name
     : undefined
 
+  // Mini-tendances (sparklines) dérivées des séries mensuelles existantes
+  const sparklines = {
+    margin: data.chartData.map((d) => (d.revenue > 0 ? Math.round((d.profit / d.revenue) * 100) : 0)),
+    totalRevenue: data.chartData.map((d) => d.revenue),
+    occupancy: data.occupancyData.map((d) => d.occupancy),
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -212,6 +219,7 @@ export default function DashboardPage() {
         activeCard={activeCard}
         onCardClick={(key) => setActiveCard(activeCard === key ? null : key)}
         comparison={data.comparison}
+        sparklines={sparklines}
       />
 
       {/* Checklist onboarding */}
