@@ -19,6 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { CommandPalette } from "@/components/layout/command-palette"
 
 interface TopbarProps {
   onMenuClick: () => void
@@ -45,6 +46,7 @@ export function Topbar({ onMenuClick }: TopbarProps) {
         >
           <Menu className="h-5 w-5" />
         </Button>
+        <CommandPalette />
         <Select defaultValue="current">
           <SelectTrigger className="h-8 w-[140px] border-none bg-transparent text-sm shadow-none">
             <SelectValue />
