@@ -9,6 +9,7 @@ import {
   CartesianGrid,
   Tooltip,
   Legend,
+  ReferenceLine,
 } from "recharts"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { formatMonth, TOOLTIP_STYLE } from "@/lib/chart-utils"
@@ -58,6 +59,7 @@ export function RevenueChart({ data }: RevenueChartProps) {
               </linearGradient>
             </defs>
             <CartesianGrid strokeDasharray="4 4" stroke="rgba(255,255,255,0.04)" />
+            <ReferenceLine y={0} stroke="rgba(255,255,255,0.25)" strokeWidth={1} />
             <XAxis
               dataKey="month"
               tickFormatter={formatMonth}
