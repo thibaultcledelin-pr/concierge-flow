@@ -12,21 +12,29 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
 import { CommandPalette } from "@/components/layout/command-palette"
+import { useProfile } from "@/hooks/use-profile"
 
 interface TopbarProps {
   onMenuClick: () => void
 }
 
+function getInitials(name: string | null, email: string): string {
+  if (name) {
+    const parts = name.trim().split(/\s+/)
+    if (parts.length >= 2) return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+    return name.slice(0, 2).toUpperCase()
+  }
+  return email.slice(0, 2).toUpperCase()
+}
+
 export function Topbar({ onMenuClick }: TopbarProps) {
   const router = useRouter()
+  const profile = useProfile()
+
+  const displayName = profile?.name || profile?.email || "…"
+  const displayEmail = profile?.email || ""
+  const initials = profile ? getInitials(profile.name, profile.email) : "…"
 
   async function handleSignOut() {
     const supabase = createClient()
@@ -47,24 +55,13 @@ export function Topbar({ onMenuClick }: TopbarProps) {
           <Menu className="h-5 w-5" />
         </Button>
         <CommandPalette />
-        <Select defaultValue="current">
-          <SelectTrigger className="h-8 w-[140px] border-none bg-transparent text-sm shadow-none">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="current">Ce mois</SelectItem>
-            <SelectItem value="last">Mois dernier</SelectItem>
-            <SelectItem value="quarter">Ce trimestre</SelectItem>
-            <SelectItem value="year">Cette année</SelectItem>
-          </SelectContent>
-        </Select>
       </div>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" className="gap-2 rounded-full px-2 hover:bg-accent">
             <Avatar className="h-8 w-8">
               <AvatarFallback className="bg-gradient-to-br from-amber-500 to-orange-600 text-xs font-semibold text-white">
-                MC
+                {initials}
               </AvatarFallback>
             </Avatar>
             <ChevronDown className="h-3 w-3 text-muted-foreground" />
@@ -74,12 +71,12 @@ export function Topbar({ onMenuClick }: TopbarProps) {
           <div className="flex items-center gap-3 px-4 py-3">
             <Avatar className="h-10 w-10">
               <AvatarFallback className="bg-gradient-to-br from-amber-500 to-orange-600 text-sm font-semibold text-white">
-                MC
+                {initials}
               </AvatarFallback>
             </Avatar>
-            <div className="flex flex-col">
-              <span className="text-sm font-medium text-foreground">Marie Conciergerie</span>
-              <span className="text-xs text-muted-foreground">demo@conciergeflow.fr</span>
+            <div className="flex flex-col overflow-hidden">
+              <span className="truncate text-sm font-medium text-foreground">{displayName}</span>
+              <span className="truncate text-xs text-muted-foreground">{displayEmail}</span>
             </div>
           </div>
           <DropdownMenuSeparator className="my-0" />
@@ -100,6 +97,7 @@ export function Topbar({ onMenuClick }: TopbarProps) {
             </DropdownMenuItem>
             <DropdownMenuItem
               className="flex items-center gap-3 rounded-md px-3 py-2.5 text-sm text-foreground hover:bg-accent cursor-pointer"
+              onClick={() => router.push("/settings")}
             >
               <Settings className="h-4 w-4 text-muted-foreground" />
               Paramètres
