@@ -133,8 +133,8 @@ describe("Dashboard API", () => {
     expect(data.chartData).toHaveLength(0)
   })
 
-  describe("revenu net par nuitée (par logement)", () => {
-    it("calcule le revenu net par nuitée de chaque logement", async () => {
+  describe("revenu brut par nuitée (par logement)", () => {
+    it("calcule le revenu brut par nuitée de chaque logement", async () => {
       mockGetUser.mockResolvedValue({ data: { user: { id: "user-1" } } })
       mockPropertyFindMany.mockResolvedValue([
         {
@@ -154,9 +154,10 @@ describe("Dashboard API", () => {
       const data = await res.json()
 
       const may = data.revenuePerNightData.find((p: { month: string }) => p.month === "2026-05")
-      // Studio = 1000/10 = 100€, Villa = (2000-500)/10 = 150€
+      // Brut = revenus / nuits (la dépense n'est plus soustraite)
+      // Studio = 1000/10 = 100€, Villa = 2000/10 = 200€
       expect(may.Studio).toBe(100)
-      expect(may.Villa).toBe(150)
+      expect(may.Villa).toBe(200)
     })
 
     it("exclut les logements sans aucune nuit et met null pour les mois sans données", async () => {
