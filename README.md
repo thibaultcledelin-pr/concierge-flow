@@ -5,7 +5,7 @@
 
 ![Next.js 16](https://img.shields.io/badge/Next.js-16-black) ![TypeScript](https://img.shields.io/badge/TypeScript-strict-blue) ![248 tests](https://img.shields.io/badge/tests-248%20passing-green) ![18 API routes](https://img.shields.io/badge/API-18%20routes-purple)
 
-![Dashboard — KPIs et sparklines](./docs/screenshots/dashboard.png)
+![Dashboard — KPIs, sparklines et feu tricolore sur la marge nette (données du 1er janvier au 1er février 2026)](./docs/screenshots/dashboard.png)
 
 ---
 
@@ -100,7 +100,7 @@ Le projet utilise Prisma comme ORM, mais les agrégations du dashboard correspon
 ### Rentabilité par logement
 
 Jointure sur 3 tables pour calculer la marge nette de chaque logement (revenus − dépenses).
-Données réelles du 1er février au 1er mars 2026 — 5 logements, 19% de marge nette globale :
+Ci-dessous, les données réelles du 1er février au 1er mars 2026 — 5 logements, du T2 République (94.7% de marge) au Loft Oberkampf (déficitaire, loyer trop élevé) :
 
 ![Rentabilité par logement](./docs/screenshots/rentabilite.png)
 
@@ -128,9 +128,10 @@ ORDER BY margin_pct DESC;
 
 ### Taux d'occupation mensuel
 
-Génère une série temporelle de 6 mois, puis calcule l'occupation de chaque logement (nuits réservées / jours du mois, plafonné à 100 %) :
+Génère une série temporelle de 6 mois, puis calcule l'occupation de chaque logement (nuits réservées / jours du mois, plafonné à 100 %).
+Donut + courbe sur la période du 1er février au 1er mars 2026 — 16.6% d'occupation globale :
 
-![Taux d'occupation](./docs/screenshots/occupation.png)
+![Taux d'occupation — donut et courbe mensuelle](./docs/screenshots/occupation.png)
 
 ```sql
 WITH months AS (
