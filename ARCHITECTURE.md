@@ -1,6 +1,6 @@
 # Architecture — ConciergeFlow
 
-> Documentation technique. ~12 500 lignes TypeScript · 18 routes API · 11 pages · 217 tests.
+> Documentation technique. ~10 500 lignes TypeScript · 18 routes API · 15 pages · 240 tests.
 
 ## Vue d'ensemble
 
@@ -45,7 +45,7 @@ src/
 │   ├── revenue/           import CSV
 │   ├── reports/           génération PDF, boutons rapport/email
 │   └── onboarding/        wizard 4 étapes, checklist
-├── hooks/                 use-toast, use-session-timeout, use-form-draft
+├── hooks/                 use-profile, use-toast, use-session-timeout, use-form-draft
 ├── lib/                   prisma, supabase, validators, parsers, utils
 └── middleware.ts          protection des routes
 ```
@@ -146,20 +146,26 @@ Les calendriers iCal fournissent les **dates** mais pas les montants ; les CSV p
 
 ---
 
-## Tests (217)
+## Tests (240)
 
 Chaque feature a ses tests colocalisés dans un dossier `__tests__/`.
 
 - **Routes API** : auth, validation, propriété des données, cas limites (division par zéro, mois sans données…)
-- **Composants** : rendu, interactions, formulaires
+- **Composants** : rendu, interactions, formulaires, états vides
 - **Parsers** : iCal, CSV (cas normaux + cas dégradés)
 - **Sécurité** : SSRF, open redirect, sanitization
 
 ```bash
-npm test        # 217 tests, ~25s
+npm test        # 240 tests, ~20s
 ```
 
 CI GitHub Actions : `npm ci` → `npm test` → `npm run lint` à chaque pull request.
+
+---
+
+## Requêtes SQL métier
+
+Voir [`docs/queries.sql`](./docs/queries.sql) pour les 7 requêtes métier documentées (marge nette, occupation, ADR, comparaison mensuelle, alertes, dépenses récurrentes).
 
 ---
 
