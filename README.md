@@ -130,6 +130,8 @@ ORDER BY margin_pct DESC;
 
 Génère une série temporelle de 6 mois, puis calcule l'occupation de chaque logement (nuits réservées / jours du mois, plafonné à 100 %) :
 
+![Taux d'occupation](./docs/screenshots/occupation.png)
+
 ```sql
 WITH months AS (
     SELECT generate_series(
