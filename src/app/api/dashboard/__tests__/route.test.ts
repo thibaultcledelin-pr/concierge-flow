@@ -133,6 +133,126 @@ describe("Dashboard API", () => {
     expect(data.chartData).toHaveLength(0)
   })
 
+  describe("revenu brut par nuitée (par logement)", () => {
+    it("calcule le revenu brut par nuitée de chaque logement", async () => {
+      mockGetUser.mockResolvedValue({ data: { user: { id: "user-1" } } })
+      mockPropertyFindMany.mockResolvedValue([
+        {
+          id: "p1", name: "Studio", city: "Paris",
+          bookings: [{ totalAmount: 1000, nights: 10, platform: "AIRBNB", checkIn: new Date("2026-05-10") }],
+          expenses: [],
+        },
+        {
+          id: "p2", name: "Villa", city: "Cannes",
+          bookings: [{ totalAmount: 2000, nights: 10, platform: "AIRBNB", checkIn: new Date("2026-05-10") }],
+          expenses: [{ amount: 500, date: new Date("2026-05-15") }],
+        },
+      ])
+      mockExpenseFindMany.mockResolvedValue([])
+
+      const res = await GET(mockRequest())
+      const data = await res.json()
+
+      const may = data.revenuePerNightData.find((p: { month: string }) => p.month === "2026-05")
+      // Brut = revenus / nuits (la dépense n'est plus soustraite)
+      // Studio = 1000/10 = 100€, Villa = 2000/10 = 200€
+      expect(may.Studio).toBe(100)
+      expect(may.Villa).toBe(200)
+    })
+
+    it("exclut les logements sans aucune nuit et met null pour les mois sans données", async () => {
+      mockGetUser.mockResolvedValue({ data: { user: { id: "user-1" } } })
+      mockPropertyFindMany.mockResolvedValue([
+        {
+          id: "p1", name: "Actif", city: "Paris",
+          bookings: [
+            { totalAmount: 900, nights: 9, platform: "AIRBNB", checkIn: new Date("2026-04-10") },
+            { totalAmount: 1000, nights: 10, platform: "AIRBNB", checkIn: new Date("2026-05-10") },
+          ],
+          expenses: [],
+        },
+        {
+          id: "p2", name: "Recent", city: "Lyon",
+          bookings: [{ totalAmount: 800, nights: 8, platform: "AIRBNB", checkIn: new Date("2026-05-10") }],
+          expenses: [],
+        },
+        { id: "p3", name: "Vide", city: "Nice", bookings: [], expenses: [] },
+      ])
+      mockExpenseFindMany.mockResolvedValue([])
+
+      const res = await GET(mockRequest())
+      const data = await res.json()
+
+      // "Vide" (aucune nuit) ne doit pas apparaître dans les courbes
+      expect(data.propertyNames).toContain("Actif")
+      expect(data.propertyNames).toContain("Recent")
+      expect(data.propertyNames).not.toContain("Vide")
+
+      // En avril, "Recent" n'a pas de données → null (pas un faux zéro)
+      const april = data.revenuePerNightData.find((p: { month: string }) => p.month === "2026-04")
+      expect(april.Recent).toBeNull()
+      expect(april.Actif).toBe(100)
+    })
+  })
+
+  describe("occupation sur intervalle de dates", () => {
+    it("calcule l'occupation sur l'intervalle from/to fourni", async () => {
+      mockGetUser.mockResolvedValue({ data: { user: { id: "user-1" } } })
+      mockPropertyFindMany.mockResolvedValue([
+        {
+          id: "p1", name: "Studio", city: "Paris",
+          bookings: [{ totalAmount: 1400, nights: 14, platform: "AIRBNB", checkIn: new Date("2026-02-10") }],
+          expenses: [],
+        },
+      ])
+      mockExpenseFindMany.mockResolvedValue([])
+
+      // Février : 28 jours dispo, 14 nuits → 50%
+      const res = await GET(mockRequest({ from: "2026-02-01", to: "2026-02-28" }))
+      const data = await res.json()
+
+      expect(data.occupancyRange).toBe(50)
+      expect(data.occupancyByProperty[0].name).toBe("Studio")
+      expect(data.occupancyByProperty[0].occupancy).toBe(50)
+    })
+
+    it("exclut les réservations hors de l'intervalle", async () => {
+      mockGetUser.mockResolvedValue({ data: { user: { id: "user-1" } } })
+      mockPropertyFindMany.mockResolvedValue([
+        {
+          id: "p1", name: "Studio", city: "Paris",
+          bookings: [{ totalAmount: 1400, nights: 14, platform: "AIRBNB", checkIn: new Date("2026-02-10") }],
+          expenses: [],
+        },
+      ])
+      mockExpenseFindMany.mockResolvedValue([])
+
+      // Mars ne contient pas la réservation de février → 0%
+      const res = await GET(mockRequest({ from: "2026-03-01", to: "2026-03-31" }))
+      const data = await res.json()
+
+      expect(data.occupancyRange).toBe(0)
+      expect(data.occupancyByProperty[0].occupancy).toBe(0)
+    })
+
+    it("plafonne l'occupation à 100%", async () => {
+      mockGetUser.mockResolvedValue({ data: { user: { id: "user-1" } } })
+      mockPropertyFindMany.mockResolvedValue([
+        {
+          id: "p1", name: "Studio", city: "Paris",
+          bookings: [{ totalAmount: 5000, nights: 60, platform: "AIRBNB", checkIn: new Date("2026-02-10") }],
+          expenses: [],
+        },
+      ])
+      mockExpenseFindMany.mockResolvedValue([])
+
+      const res = await GET(mockRequest({ from: "2026-02-01", to: "2026-02-28" }))
+      const data = await res.json()
+
+      expect(data.occupancyRange).toBe(100)
+    })
+  })
+
   it("returns 0% occupancy for properties with no bookings", async () => {
     mockGetUser.mockResolvedValue({ data: { user: { id: "user-1" } } })
     mockPropertyFindMany.mockResolvedValue([

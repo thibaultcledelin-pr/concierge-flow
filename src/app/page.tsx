@@ -78,6 +78,12 @@ export default function LandingPage() {
         </div>
         <div className="flex items-center gap-3">
           <Link
+            href="/pricing"
+            className="hidden text-sm text-muted-foreground transition-colors hover:text-foreground sm:inline"
+          >
+            Tarifs
+          </Link>
+          <Link
             href="/login"
             className="text-sm text-muted-foreground transition-colors hover:text-foreground"
           >
@@ -205,6 +211,13 @@ export default function LandingPage() {
               <ArrowRight className="h-4 w-4" />
             </Link>
           </div>
+          <Link
+            href="/pricing"
+            className="mt-6 inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
+          >
+            Voir tous les plans et tarifs
+            <ArrowRight className="h-3.5 w-3.5" />
+          </Link>
         </section>
 
         {/* Final CTA */}

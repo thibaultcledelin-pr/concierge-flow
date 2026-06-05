@@ -59,7 +59,7 @@
 
 ## ⏳ Prochaines étapes
 - Nom & logo définitifs (Voltaflow ?)
-- Stripe — abonnement et facturation
+- Monétisation : page tarifs publique ✅ — branchement Stripe Checkout + webhooks à venir
 - Recherche globale (Cmd+K)
 - Notifications email (résumé hebdomadaire)
 - Application mobile / PWA
