@@ -93,35 +93,24 @@ Voir le schéma complet : [`prisma/schema.prisma`](./prisma/schema.prisma)
 
 ## Requêtes SQL métier
 
-Le projet utilise Prisma comme ORM, mais les agrégations du dashboard correspondent à des requêtes SQL complexes. Le fichier **[`docs/queries.sql`](./docs/queries.sql)** documente les 7 requêtes métier clés :
+Le projet utilise Prisma comme ORM, mais les agrégations du dashboard correspondent à du SQL non trivial. Voici les principales requêtes métier — le fichier complet est dans [`docs/queries.sql`](./docs/queries.sql).
 
-| # | Requête | Concepts SQL |
-|---|---------|-------------|
-| 1 | **Marge nette par logement** | `LEFT JOIN` multi-tables, `CASE WHEN`, agrégation `GROUP BY` |
-| 2 | **Occupation mensuelle par logement** | `generate_series`, `CROSS JOIN`, `EXTRACT`, `LEAST` |
-| 3 | **ADR (revenu moyen/nuitée) — tendance** | `HAVING`, `NULLIF` (division safe), `date_trunc` |
-| 4 | **Comparaison mois courant vs précédent** | CTEs imbriquées, `self-join` temporel, variation en % |
-| 5 | **Répartition CA par plateforme** | Sous-requête scalaire, `revenue_share_pct` |
-| 6 | **Alertes : logements problématiques** | CTE `property_stats`, `CASE` multi-niveaux, tri par priorité |
-| 7 | **Dépenses récurrentes à générer** | `IS NOT DISTINCT FROM` (NULL-safe), intervalles PostgreSQL |
+### Rentabilité par logement
 
-<details>
-<summary>Exemple : marge nette par logement (requête #1)</summary>
+Jointure sur 3 tables pour calculer la marge nette de chaque logement (revenus − dépenses) :
 
 ```sql
 SELECT
     p.name,
     p.city,
-    COALESCE(SUM(b.total_amount), 0)                                    AS revenue,
-    COALESCE(SUM(e.amount), 0)                                           AS expenses,
-    COALESCE(SUM(b.total_amount), 0) - COALESCE(SUM(e.amount), 0)       AS profit,
-    CASE
-        WHEN COALESCE(SUM(b.total_amount), 0) > 0
-        THEN ROUND(
-            ((SUM(b.total_amount) - COALESCE(SUM(e.amount), 0))
-             / SUM(b.total_amount)) * 100, 1)
-        ELSE 0
-    END AS margin_pct
+    COALESCE(SUM(b.total_amount), 0)                                  AS revenue,
+    COALESCE(SUM(e.amount), 0)                                         AS expenses,
+    COALESCE(SUM(b.total_amount), 0) - COALESCE(SUM(e.amount), 0)     AS profit,
+    CASE WHEN SUM(b.total_amount) > 0
+         THEN ROUND(((SUM(b.total_amount) - COALESCE(SUM(e.amount), 0))
+                      / SUM(b.total_amount)) * 100, 1)
+         ELSE 0
+    END                                                                AS margin_pct
 FROM properties p
 LEFT JOIN bookings b ON b.property_id = p.id
 LEFT JOIN expenses e ON e.property_id = p.id
@@ -130,46 +119,85 @@ GROUP BY p.id, p.name, p.city
 ORDER BY margin_pct DESC;
 ```
 
-</details>
+> **Résultat** : un classement des logements du plus au moins rentable, avec marge en %.
 
-<details>
-<summary>Exemple : taux d'occupation mensuel (requête #2)</summary>
+### Taux d'occupation mensuel
+
+Génère une série temporelle de 6 mois, puis calcule l'occupation de chaque logement (nuits réservées / jours du mois, plafonné à 100 %) :
 
 ```sql
 WITH months AS (
     SELECT generate_series(
         date_trunc('month', NOW()) - INTERVAL '5 months',
-        date_trunc('month', NOW()),
-        '1 month'
+        date_trunc('month', NOW()), '1 month'
     )::date AS month_start
 ),
 property_nights AS (
-    SELECT
-        b.property_id,
-        date_trunc('month', b.check_in)::date AS month_start,
-        SUM(b.nights)                          AS nights
+    SELECT b.property_id,
+           date_trunc('month', b.check_in)::date AS month_start,
+           SUM(b.nights) AS nights
     FROM bookings b
     JOIN properties p ON p.id = b.property_id
     WHERE p.user_id = :user_id
     GROUP BY b.property_id, date_trunc('month', b.check_in)
 )
-SELECT
-    p.name,
-    TO_CHAR(m.month_start, 'YYYY-MM') AS month,
-    LEAST(100, ROUND(
-        COALESCE(pn.nights, 0)::numeric
-        / EXTRACT(DAY FROM (m.month_start + INTERVAL '1 month' - INTERVAL '1 day'))
-        * 100, 1
-    )) AS occupancy_pct
+SELECT p.name,
+       TO_CHAR(m.month_start, 'YYYY-MM') AS month,
+       LEAST(100, ROUND(
+           COALESCE(pn.nights, 0)::numeric
+           / EXTRACT(DAY FROM m.month_start + INTERVAL '1 month' - INTERVAL '1 day')
+           * 100, 1
+       )) AS occupancy_pct
 FROM properties p
 CROSS JOIN months m
-LEFT JOIN property_nights pn
-    ON pn.property_id = p.id AND pn.month_start = m.month_start
+LEFT JOIN property_nights pn ON pn.property_id = p.id AND pn.month_start = m.month_start
 WHERE p.user_id = :user_id
 ORDER BY p.name, m.month_start;
 ```
 
-</details>
+> **Concepts** : `generate_series` pour la grille temporelle, `CROSS JOIN` pour le produit cartésien logements × mois, `LEAST` pour le plafonnement.
+
+### Comparaison mois courant vs précédent
+
+CTEs imbriquées qui calculent les KPIs des deux derniers mois en une seule requête, puis retournent la variation en % :
+
+```sql
+WITH monthly_kpis AS (
+    SELECT TO_CHAR(date_trunc('month', b.check_in), 'YYYY-MM') AS month,
+           SUM(b.total_amount) AS revenue, SUM(b.nights) AS nights
+    FROM bookings b JOIN properties p ON p.id = b.property_id
+    WHERE p.user_id = :user_id
+      AND b.check_in >= date_trunc('month', NOW()) - INTERVAL '1 month'
+    GROUP BY date_trunc('month', b.check_in)
+),
+with_expenses AS (
+    SELECT mk.*,
+           COALESCE((SELECT SUM(amount) FROM expenses
+                     WHERE user_id = :user_id AND TO_CHAR(date, 'YYYY-MM') = mk.month), 0) AS expenses
+    FROM monthly_kpis mk
+)
+SELECT curr.revenue AS current_revenue,
+       curr.revenue - curr.expenses AS current_profit,
+       ROUND(((curr.revenue - prev.revenue) / NULLIF(prev.revenue, 0)) * 100, 1)
+           AS revenue_variation_pct
+FROM with_expenses curr
+LEFT JOIN with_expenses prev
+    ON prev.month = TO_CHAR(date_trunc('month', NOW()) - INTERVAL '1 month', 'YYYY-MM')
+WHERE curr.month = TO_CHAR(NOW(), 'YYYY-MM');
+```
+
+> **Résultat** : les KPIs du mois en cours + la variation vs le mois précédent (ce qui alimente les badges ▲/▼ du dashboard).
+
+### Autres requêtes documentées
+
+Le fichier [`docs/queries.sql`](./docs/queries.sql) contient également :
+
+| Requête | Ce qu'elle fait |
+|---------|----------------|
+| **ADR mensuel** | Revenu moyen par nuitée, par logement et par mois (`HAVING`, `NULLIF`) |
+| **CA par plateforme** | Répartition Airbnb/Booking/Direct avec % du total |
+| **Alertes logements** | Identifie en une requête les logements à marge négative ou occupation basse |
+| **Dépenses récurrentes** | Trouve les récurrences dont la prochaine occurrence est due (`IS NOT DISTINCT FROM`, intervalles PostgreSQL) |
 
 ---
 
