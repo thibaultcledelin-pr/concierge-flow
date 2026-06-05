@@ -36,4 +36,40 @@ describe("StatsCards", () => {
     expect(screen.getByText("82.5%")).toBeInTheDocument()
     expect(screen.getByText("45.2%")).toBeInTheDocument()
   })
+
+  it("affiche le statut 'Excellente rentabilité' pour une marge >= 30", () => {
+    render(
+      <StatsCards occupancyRate={75} avgRevenuePerNight={120} totalMargin={42} revPAR={95} adr={150} totalRevenue={5000} />
+    )
+    expect(screen.getByText("Excellente rentabilité")).toBeInTheDocument()
+  })
+
+  it("affiche le statut 'Rentabilité correcte' pour une marge entre 10 et 30", () => {
+    render(
+      <StatsCards occupancyRate={75} avgRevenuePerNight={120} totalMargin={18} revPAR={95} adr={150} totalRevenue={5000} />
+    )
+    expect(screen.getByText("Rentabilité correcte")).toBeInTheDocument()
+  })
+
+  it("affiche le statut 'Rentabilité faible' pour une marge < 10", () => {
+    render(
+      <StatsCards occupancyRate={75} avgRevenuePerNight={120} totalMargin={4} revPAR={95} adr={150} totalRevenue={5000} />
+    )
+    expect(screen.getByText("Rentabilité faible")).toBeInTheDocument()
+  })
+
+  it("rend une sparkline quand une série est fournie", () => {
+    const { container } = render(
+      <StatsCards
+        occupancyRate={75}
+        avgRevenuePerNight={120}
+        totalMargin={42}
+        revPAR={95}
+        adr={150}
+        totalRevenue={5000}
+        sparklines={{ margin: [10, 20, 30, 42], totalRevenue: [1000, 2000, 5000] }}
+      />
+    )
+    expect(container.querySelector("svg")).toBeInTheDocument()
+  })
 })

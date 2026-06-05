@@ -48,12 +48,28 @@ interface DashboardData {
   }[]
   chartData: { month: string; revenue: number; expenses: number; profit: number }[]
   occupancyData: { month: string; occupancy: number }[]
-  revenuePerNightData: Record<string, string | number>[]
+  revenuePerNightData: ({ month: string } & Record<string, string | number | null>)[]
   propertyNames: string[]
   occupancyByProperty: { name: string; occupancy: number }[]
+  occupancyRange: number
   platformData: { name: string; value: number }[]
   allProperties: { id: string; name: string }[]
   comparison?: StatsComparison
+}
+
+// Date ISO (yyyy-mm-dd) il y a N jours
+function isoDaysAgo(days: number): string {
+  const d = new Date()
+  d.setDate(d.getDate() - days)
+  return d.toISOString().slice(0, 10)
+}
+
+// Libellé court d'un intervalle ("12 mai – 11 juin")
+function formatRangeLabel(from: string, to: string): string {
+  const opts: Intl.DateTimeFormatOptions = { day: "numeric", month: "short" }
+  const f = new Date(`${from}T00:00:00`).toLocaleDateString("fr-FR", opts)
+  const t = new Date(`${to}T00:00:00`).toLocaleDateString("fr-FR", opts)
+  return `${f} – ${t}`
 }
 
 export default function DashboardPage() {
@@ -62,12 +78,16 @@ export default function DashboardPage() {
   const [error, setError] = useState(false)
   const [selectedProperty, setSelectedProperty] = useState<string>("all")
   const [activeCard, setActiveCard] = useState<KpiKey | null>(null)
+  // Intervalle d'occupation — défaut : 30 derniers jours
+  const [fromDate, setFromDate] = useState<string>(() => isoDaysAgo(29))
+  const [toDate, setToDate] = useState<string>(() => isoDaysAgo(0))
 
-  function loadDashboard(propertyId: string, signal?: AbortSignal) {
-    const url = propertyId !== "all"
-      ? `/api/dashboard?propertyId=${propertyId}`
-      : "/api/dashboard"
-    return fetch(url, signal ? { signal } : undefined)
+  function loadDashboard(propertyId: string, from: string, to: string, signal?: AbortSignal) {
+    const params = new URLSearchParams()
+    if (propertyId !== "all") params.set("propertyId", propertyId)
+    params.set("from", from)
+    params.set("to", to)
+    return fetch(`/api/dashboard?${params.toString()}`, signal ? { signal } : undefined)
       .then((res) => {
         if (!res.ok) throw new Error()
         return res.json()
@@ -77,13 +97,13 @@ export default function DashboardPage() {
   useEffect(() => {
     const controller = new AbortController()
     let cancelled = false
-    loadDashboard(selectedProperty, controller.signal)
+    loadDashboard(selectedProperty, fromDate, toDate, controller.signal)
       .then((d) => { if (!cancelled) { setData(d); setLoading(false); setError(false) } })
       .catch((err) => {
         if (!cancelled && err.name !== "AbortError") { setError(true); setLoading(false) }
       })
     return () => { cancelled = true; controller.abort() }
-  }, [selectedProperty])
+  }, [selectedProperty, fromDate, toDate])
 
   function handlePropertyChange(value: string) {
     setSelectedProperty(value)
@@ -94,7 +114,7 @@ export default function DashboardPage() {
   function retry() {
     setError(false)
     setLoading(true)
-    loadDashboard(selectedProperty)
+    loadDashboard(selectedProperty, fromDate, toDate)
       .then((d) => { setData(d); setLoading(false) })
       .catch(() => { setError(true); setLoading(false) })
   }
@@ -128,6 +148,13 @@ export default function DashboardPage() {
     ? data.allProperties.find((p) => p.id === selectedProperty)?.name
     : undefined
 
+  // Mini-tendances (sparklines) dérivées des séries mensuelles existantes
+  const sparklines = {
+    margin: data.chartData.map((d) => (d.revenue > 0 ? Math.round((d.profit / d.revenue) * 100) : 0)),
+    totalRevenue: data.chartData.map((d) => d.revenue),
+    occupancy: data.occupancyData.map((d) => d.occupancy),
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -137,7 +164,26 @@ export default function DashboardPage() {
             Vue d&apos;ensemble — {data.stats.propertyCount} logement{data.stats.propertyCount !== 1 ? "s" : ""}
           </p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-2 rounded-lg border border-border/60 bg-card px-3 py-1.5 text-sm [color-scheme:dark]">
+            <input
+              type="date"
+              value={fromDate}
+              max={toDate}
+              onChange={(e) => setFromDate(e.target.value)}
+              className="bg-transparent text-foreground outline-none"
+              aria-label="Date de début"
+            />
+            <span className="text-muted-foreground">→</span>
+            <input
+              type="date"
+              value={toDate}
+              min={fromDate}
+              onChange={(e) => setToDate(e.target.value)}
+              className="bg-transparent text-foreground outline-none"
+              aria-label="Date de fin"
+            />
+          </div>
           {data.allProperties.length > 1 && (
             <Select value={selectedProperty} onValueChange={handlePropertyChange}>
               <SelectTrigger className="w-[220px]">
@@ -173,6 +219,7 @@ export default function DashboardPage() {
         activeCard={activeCard}
         onCardClick={(key) => setActiveCard(activeCard === key ? null : key)}
         comparison={data.comparison}
+        sparklines={sparklines}
       />
 
       {/* Checklist onboarding */}
@@ -181,7 +228,7 @@ export default function DashboardPage() {
       {/* Graphe contextuel selon KPI sélectionné */}
       {activeCard === "occupancy" && (
         <div className="grid gap-6 lg:grid-cols-4">
-          <OccupationDonut rate={data.stats.occupancyRate} />
+          <OccupationDonut rate={data.occupancyRange} periodLabel={formatRangeLabel(fromDate, toDate)} />
           <div className="lg:col-span-3">
             <OccupancyChart data={data.occupancyData} />
           </div>
@@ -206,7 +253,7 @@ export default function DashboardPage() {
       {!activeCard && (
         <>
           <div className="grid gap-6 lg:grid-cols-4">
-            <OccupationDonut rate={data.stats.occupancyRate} />
+            <OccupationDonut rate={data.occupancyRange} periodLabel={formatRangeLabel(fromDate, toDate)} />
             <div className="lg:col-span-3">
               <OccupancyChart data={data.occupancyData} />
             </div>
