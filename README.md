@@ -95,7 +95,7 @@ Voir le schéma complet : [`prisma/schema.prisma`](./prisma/schema.prisma)
 
 ## Requêtes SQL métier
 
-Le projet utilise Prisma comme ORM, mais les agrégations du dashboard correspondent à du SQL non trivial. Voici les principales — le fichier complet est dans [`docs/queries.sql`](./docs/queries.sql).
+Le projet utilise Prisma comme ORM, mais les agrégations du dashboard correspondent à du SQL non trivial. Voici les principales.
 
 ### Rentabilité par logement
 
@@ -190,17 +190,6 @@ WHERE curr.month = TO_CHAR(NOW(), 'YYYY-MM');
 
 > **Résultat** : les KPIs du mois en cours + la variation vs le mois précédent (ce qui alimente les badges ▲/▼ du dashboard).
 
-### Autres requêtes documentées
-
-Le fichier [`docs/queries.sql`](./docs/queries.sql) contient également :
-
-| Requête | Ce qu'elle fait |
-|---------|----------------|
-| **ADR mensuel** | Revenu moyen par nuitée, par logement et par mois (`HAVING`, `NULLIF`) |
-| **CA par plateforme** | Répartition Airbnb/Booking/Direct avec % du total |
-| **Alertes logements** | Identifie en une requête les logements à marge négative ou occupation basse |
-| **Dépenses récurrentes** | Trouve les récurrences dont la prochaine occurrence est due (`IS NOT DISTINCT FROM`, intervalles PostgreSQL) |
-
 ---
 
 ## Structure du projet
@@ -287,7 +276,6 @@ CI : GitHub Actions lance `npm ci → npm test → npm run lint` sur chaque PR.
 
 - [`ARCHITECTURE.md`](./ARCHITECTURE.md) — routes API détaillées, flux de données, guide contribution
 - [`ROADMAP.md`](./ROADMAP.md) — état d'avancement et prochaines étapes
-- [`docs/queries.sql`](./docs/queries.sql) — 7 requêtes SQL métier documentées
 
 ---
 
