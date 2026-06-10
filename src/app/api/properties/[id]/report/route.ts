@@ -2,6 +2,7 @@ import { round1 } from "@/lib/utils"
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { createClient } from "@/lib/supabase/server"
+import { computeOwnerStatement } from "@/lib/owner-statement"
 
 
 export async function GET(
@@ -73,14 +74,19 @@ export async function GET(
       date: e.date,
     }))
 
+  // Relevé de gestion : net à reverser au propriétaire (revenus − commission − dépenses)
+  const ownerStatement = computeOwnerStatement(totalRevenue, totalExpenses, property.commissionRate)
+
   return NextResponse.json({
     property: {
       name: property.name,
       address: property.address,
       city: property.city,
       type: property.type,
+      ownerName: property.ownerName,
     },
     period: monthParam || "all",
+    ownerStatement,
     stats: {
       totalRevenue,
       totalExpenses,
