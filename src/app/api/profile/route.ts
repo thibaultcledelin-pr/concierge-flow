@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { createClient } from "@/lib/supabase/server"
+import { userUpdateSchema } from "@/lib/validators"
 
 export async function GET() {
   const supabase = await createClient()
@@ -42,7 +43,14 @@ export async function PUT(request: Request) {
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 })
   }
 
-  const { name, company } = body
+  const parsed = userUpdateSchema.safeParse(body)
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: "Validation échouée", details: parsed.error.flatten().fieldErrors },
+      { status: 400 }
+    )
+  }
+  const { name, company } = parsed.data
 
   const updated = await prisma.user.update({
     where: { id: user.id },

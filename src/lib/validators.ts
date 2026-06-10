@@ -38,3 +38,8 @@ export const bookingSchema = z.object({
   platform: z.enum(['AIRBNB', 'BOOKING', 'DIRECT', 'OTHER']),
   source: z.enum(['ICAL', 'MANUAL', 'CSV']),
 })
+
+export const userUpdateSchema = z.object({
+  name: z.string().trim().min(1, 'Nom requis').max(120, 'Nom trop long').optional(),
+  company: z.string().trim().max(120, 'Nom trop long').optional().or(z.literal('')),
+})
