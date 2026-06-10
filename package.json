@@ -42,7 +42,7 @@
     "jspdf": "^4.2.1",
     "jspdf-autotable": "^5.0.7",
     "lucide-react": "^1.8.0",
-    "next": "16.2.4",
+    "next": "^16.2.9",
     "papaparse": "^5.5.3",
     "pg": "^8.20.0",
     "prisma": "^7.7.0",
