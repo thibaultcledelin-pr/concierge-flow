@@ -107,7 +107,12 @@ export async function GET() {
 
   const properties = await prisma.property.findMany({
     where: { userId: user.id },
-    include: { bookings: true, expenses: true },
+    select: {
+      id: true,
+      name: true,
+      bookings: { select: { totalAmount: true, nights: true, checkIn: true } },
+      expenses: { select: { amount: true } },
+    },
   })
 
   const alerts = generateAlerts(properties as PropertyData[])

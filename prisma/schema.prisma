@@ -43,6 +43,7 @@ model Property {
   bookings Booking[]
   expenses Expense[]
 
+  @@index([userId])
   @@map("properties")
 }
 
@@ -71,6 +72,7 @@ model Booking {
 
   property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
 
+  @@index([propertyId, checkIn])
   @@map("bookings")
 }
 
@@ -102,6 +104,9 @@ model Expense {
 
   user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   property Property? @relation(fields: [propertyId], references: [id], onDelete: SetNull)
+
+  @@index([userId, date])
+  @@index([propertyId])
 
   @@map("expenses")
 }

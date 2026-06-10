@@ -288,16 +288,27 @@ export async function GET(request: Request) {
     orderBy: { name: "asc" },
   })
 
-  // Logements filtrés (un seul si propertyId, tous sinon)
+  // Logements filtrés (un seul si propertyId, tous sinon).
+  // `select` ciblé : on ne charge que les colonnes réellement agrégées
+  // (pas guestName, externalId, notes…) → moins de mémoire et de bande passante.
   const properties = await prisma.property.findMany({
     where: propertyId ? { userId: user.id, id: propertyId } : { userId: user.id },
-    include: { bookings: true, expenses: true },
+    select: {
+      id: true,
+      name: true,
+      city: true,
+      bookings: { select: { totalAmount: true, nights: true, platform: true, checkIn: true } },
+      expenses: { select: { amount: true, date: true } },
+    },
   }) as PropertyWithRelations[]
 
   // Dépenses globales (exclues en vue mono-logement)
   const globalExpenses = propertyId
     ? []
-    : await prisma.expense.findMany({ where: { userId: user.id, propertyId: null } }) as ExpenseRecord[]
+    : await prisma.expense.findMany({
+        where: { userId: user.id, propertyId: null },
+        select: { amount: true, date: true },
+      }) as ExpenseRecord[]
 
   // Rentabilité par logement
   const profitability = properties.map(computePropertyProfitability)
