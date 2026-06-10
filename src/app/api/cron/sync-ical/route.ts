@@ -2,12 +2,11 @@ import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { parseIcal, detectPlatform } from "@/lib/ical-parser"
 import { isAllowedUrl } from "@/lib/url-validator"
+import { requireCron } from "@/lib/cron-auth"
 
 export async function GET(request: Request) {
-  const secret = request.headers.get("authorization")?.replace("Bearer ", "")
-  if (process.env.CRON_SECRET && secret !== process.env.CRON_SECRET) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  }
+  const denied = requireCron(request)
+  if (denied) return denied
 
   const properties = await prisma.property.findMany({
     where: {

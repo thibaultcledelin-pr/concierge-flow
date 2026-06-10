@@ -14,7 +14,7 @@ vi.mock("@/lib/prisma", () => ({
   },
 }))
 
-import { nextOccurrence, POST } from "../route"
+import { nextOccurrence, POST, GET } from "../route"
 
 describe("nextOccurrence", () => {
   it("advances by 7 days for WEEKLY", () => {
@@ -44,34 +44,45 @@ describe("nextOccurrence", () => {
   })
 })
 
+const CRON = "secret123"
+const authReq = (method: "GET" | "POST" = "POST") =>
+  new Request("http://localhost/api/cron/recurring-expenses", {
+    method,
+    headers: { authorization: `Bearer ${CRON}` },
+  })
+
 describe("POST /api/cron/recurring-expenses", () => {
   beforeEach(() => { vi.clearAllMocks() })
 
-  it("returns 401 when CRON_SECRET is set and header is wrong", async () => {
-    process.env.CRON_SECRET = "secret123"
+  it("returns 401 when CRON_SECRET is set and the Bearer token is wrong", async () => {
+    process.env.CRON_SECRET = CRON
     const req = new Request("http://localhost/api/cron/recurring-expenses", {
       method: "POST",
-      headers: { "x-cron-secret": "wrong" },
+      headers: { authorization: "Bearer wrong" },
     })
     const res = await POST(req)
     expect(res.status).toBe(401)
     delete process.env.CRON_SECRET
   })
 
-  it("runs without auth when CRON_SECRET is not set", async () => {
+  it("fails closed (503) when CRON_SECRET is not configured", async () => {
     delete process.env.CRON_SECRET
+    const res = await POST(authReq())
+    expect(res.status).toBe(503)
+  })
+
+  it("accepts a GET with the correct Bearer token (Vercel Cron)", async () => {
+    process.env.CRON_SECRET = CRON
     mockFindMany.mockResolvedValue([])
-
-    const req = new Request("http://localhost/api/cron/recurring-expenses", { method: "POST" })
-    const res = await POST(req)
+    const res = await GET(authReq("GET"))
     const data = await res.json()
-
     expect(res.status).toBe(200)
     expect(data.created).toBe(0)
+    delete process.env.CRON_SECRET
   })
 
   it("creates missing monthly occurrences up to today", async () => {
-    delete process.env.CRON_SECRET
+    process.env.CRON_SECRET = CRON
     const oldDate = new Date()
     oldDate.setMonth(oldDate.getMonth() - 3)
 
@@ -85,16 +96,16 @@ describe("POST /api/cron/recurring-expenses", () => {
     mockFindFirst.mockResolvedValue(null)
     mockCreate.mockResolvedValue({})
 
-    const req = new Request("http://localhost/api/cron/recurring-expenses", { method: "POST" })
-    const res = await POST(req)
+    const res = await POST(authReq())
     const data = await res.json()
 
     expect(res.status).toBe(200)
     expect(data.created).toBeGreaterThan(0)
+    delete process.env.CRON_SECRET
   })
 
   it("skips creating duplicates when occurrence already exists", async () => {
-    delete process.env.CRON_SECRET
+    process.env.CRON_SECRET = CRON
     const oldDate = new Date()
     oldDate.setMonth(oldDate.getMonth() - 2)
 
@@ -107,9 +118,9 @@ describe("POST /api/cron/recurring-expenses", () => {
     ])
     mockFindFirst.mockResolvedValue({ id: "already-exists" })
 
-    const req = new Request("http://localhost/api/cron/recurring-expenses", { method: "POST" })
-    await POST(req)
+    await POST(authReq())
 
     expect(mockCreate).not.toHaveBeenCalled()
+    delete process.env.CRON_SECRET
   })
 })
