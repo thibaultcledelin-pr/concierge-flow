@@ -176,15 +176,28 @@ export function PropertyForm({ defaultValues, propertyId }: PropertyFormProps) {
             </div>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="monthlyRent">Loyer mensuel (€)</Label>
-            <Input
-              id="monthlyRent"
-              type="number"
-              step="0.01"
-              placeholder="1200"
-              {...register("monthlyRent", { valueAsNumber: true })}
-            />
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="monthlyRent">Loyer mensuel (€)</Label>
+              <Input
+                id="monthlyRent"
+                type="number"
+                step="0.01"
+                placeholder="1200"
+                {...register("monthlyRent", { valueAsNumber: true })}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="commissionRate">Commission conciergerie (%)</Label>
+              <Input
+                id="commissionRate"
+                type="number"
+                step="0.1"
+                placeholder="20"
+                {...register("commissionRate", { valueAsNumber: true })}
+              />
+              <p className="text-xs text-muted-foreground">Sert à calculer le net à reverser au propriétaire</p>
+            </div>
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">

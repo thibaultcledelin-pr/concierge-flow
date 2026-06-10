@@ -32,6 +32,7 @@ model Property {
   icalUrl     String?      @map("ical_url")
   icalUrlBooking String?   @map("ical_url_booking")
   monthlyRent Float?       @map("monthly_rent")
+  commissionRate Float?    @map("commission_rate")
   imageUrl    String?      @map("image_url")
   isActive    Boolean      @default(true) @map("is_active")
   ownerName   String?      @map("owner_name")
