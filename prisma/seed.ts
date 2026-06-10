@@ -1,5 +1,5 @@
 import "dotenv/config"
-import { PrismaClient } from "@prisma/client"
+import { PrismaClient, type Frequency } from "@prisma/client"
 import { PrismaPg } from "@prisma/adapter-pg"
 
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL! })
@@ -202,7 +202,7 @@ async function main() {
         amount: e.amt,
         date: e.d,
         isRecurring: e.rec || false,
-        frequency: (e as { freq?: string }).freq || undefined,
+        frequency: ((e as { freq?: string }).freq as Frequency | undefined) || undefined,
       },
     })
     eCount++

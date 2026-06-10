@@ -70,8 +70,8 @@ export function OccupancyChart({ data }: OccupancyChartProps) {
             <Tooltip
               cursor={{ stroke: "rgba(255,255,255,0.1)", strokeWidth: 1 }}
               contentStyle={TOOLTIP_STYLE}
-              formatter={(value: number | string) => [`${Number(value).toFixed(1)}%`, "Occupation"]}
-              labelFormatter={(label: number | string) => formatMonth(String(label))}
+              formatter={(value) => [`${Number(value).toFixed(1)}%`, "Occupation"]}
+              labelFormatter={(label) => formatMonth(String(label))}
             />
             <Area
               type="monotone"

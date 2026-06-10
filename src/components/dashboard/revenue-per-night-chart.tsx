@@ -9,7 +9,6 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  type TooltipProps,
 } from "recharts"
 import { ArrowDown, ArrowUp, Minus } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -65,8 +64,21 @@ function renderEndLabel(
   )
 }
 
+// Props injectées par Recharts au composant de contenu du tooltip.
+interface TooltipRow {
+  value?: number | null
+  name?: string | number
+  dataKey?: string | number
+  color?: string
+}
+interface PerPropertyTooltipProps {
+  active?: boolean
+  label?: string | number
+  payload?: TooltipRow[]
+}
+
 // Tooltip sombre : liste les logements ayant des données ce mois-là
-function PerPropertyTooltip({ active, payload, label }: TooltipProps<number, string>) {
+function PerPropertyTooltip({ active, payload, label }: PerPropertyTooltipProps) {
   if (!active || !payload || payload.length === 0) return null
   const rows = payload.filter((p) => p.value != null)
   if (rows.length === 0) return null
