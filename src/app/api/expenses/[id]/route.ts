@@ -86,15 +86,15 @@ export async function DELETE(
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 
-  const existing = await prisma.expense.findFirst({
+  // Suppression atomique : le filtre userId garantit qu'on ne supprime que
+  // ses propres dépenses, sans fenêtre de course entre vérification et delete.
+  const { count } = await prisma.expense.deleteMany({
     where: { id, userId: user.id },
   })
 
-  if (!existing) {
+  if (count === 0) {
     return NextResponse.json({ error: "Not found" }, { status: 404 })
   }
-
-  await prisma.expense.delete({ where: { id } })
 
   return NextResponse.json({ success: true })
 }
