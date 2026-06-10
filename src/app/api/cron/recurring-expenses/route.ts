@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
+import { requireCron } from "@/lib/cron-auth"
 
 // Décale une date selon la fréquence (WEEKLY → +7 jours, MONTHLY → +1 mois, etc.)
 export function nextOccurrence(date: Date, frequency: "WEEKLY" | "MONTHLY" | "QUARTERLY" | "YEARLY"): Date {
@@ -86,13 +87,9 @@ export async function runRecurringExpenses(now: Date = new Date()): Promise<{ cr
   return { created }
 }
 
-// Endpoint pour déclencher manuellement ou via cron
-export async function POST(request: Request) {
-  // Protection simple : vérifier un header secret (pour cron externe)
-  const secret = request.headers.get("x-cron-secret")
-  if (process.env.CRON_SECRET && secret !== process.env.CRON_SECRET) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  }
+async function handle(request: Request) {
+  const denied = requireCron(request)
+  if (denied) return denied
 
   try {
     const result = await runRecurringExpenses()
@@ -101,4 +98,14 @@ export async function POST(request: Request) {
     console.error("[cron/recurring-expenses] Error:", err)
     return NextResponse.json({ error: "Failed to run" }, { status: 500 })
   }
+}
+
+// GET : appelé par Vercel Cron (envoie `Authorization: Bearer <CRON_SECRET>`)
+export async function GET(request: Request) {
+  return handle(request)
+}
+
+// POST : déclenchement manuel (même protection)
+export async function POST(request: Request) {
+  return handle(request)
 }
