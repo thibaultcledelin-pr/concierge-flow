@@ -78,11 +78,11 @@ export function RevenueChart({ data }: RevenueChartProps) {
             <Tooltip
               cursor={{ stroke: "rgba(255,255,255,0.1)", strokeWidth: 1 }}
               contentStyle={TOOLTIP_STYLE}
-              formatter={(value: number | string, name: number | string) => {
+              formatter={(value, name) => {
                 const labels: Record<string, string> = { revenue: "Revenus", expenses: "Dépenses", profit: "Marge nette" }
                 return [`${Number(value).toFixed(0)}€`, labels[String(name)] || String(name)]
               }}
-              labelFormatter={(label: number | string) => formatMonth(String(label))}
+              labelFormatter={(label) => formatMonth(String(label))}
             />
             <Legend
               iconType="circle"
